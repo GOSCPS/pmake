@@ -10,6 +10,7 @@ use std::num::ParseIntError;
 use std::{
     ops::Index,
     path::{Path, PathBuf},
+    sync::Arc,
 };
 
 use super::{error::ParseError, preparse::LineInfo};
@@ -34,7 +35,7 @@ pub enum TokenType {
     BigParanthesesEnd,
 
     // :
-    Colon
+    Colon,
 }
 
 // Token
@@ -50,7 +51,7 @@ pub struct Token {
     pub offset: usize,
 
     // Token文件名称
-    pub file: PathBuf,
+    pub file: Arc<PathBuf>,
 }
 
 // 解析数字
@@ -217,6 +218,8 @@ pub fn parse_token(lines: &[LineInfo]) -> Result<Vec<Token>, ParseError> {
 
     // 遍历每一行
     for line in lines.iter() {
+        let source_file = Arc::new(std::fs::canonicalize(&*line.source_file).unwrap());
+
         // 字符数组
         let chars: Vec<char> = line.source.chars().collect();
 
@@ -246,8 +249,7 @@ pub fn parse_token(lines: &[LineInfo]) -> Result<Vec<Token>, ParseError> {
                         return Err(ParseError {
                             source: line.source.clone(),
                             line_number: line.line_number,
-                            file: std::fs::canonicalize(std::path::Path::new(&line.source_file))
-                                .unwrap(),
+                            file: source_file,
                             offset: started_ptr,
                             length: ptr - started_ptr,
                             reason_str: Some(String::from("The digit parse error!")),
@@ -261,9 +263,7 @@ pub fn parse_token(lines: &[LineInfo]) -> Result<Vec<Token>, ParseError> {
                             typed: TokenType::Number(num),
                             line_number: line.line_number,
                             offset: ptr,
-                            file: std::fs::canonicalize(std::path::Path::new(&line.source_file))
-                                .unwrap()
-                                .clone(),
+                            file: source_file.clone(),
                         }
                     }
                 }
@@ -280,8 +280,7 @@ pub fn parse_token(lines: &[LineInfo]) -> Result<Vec<Token>, ParseError> {
                         return Err(ParseError {
                             source: line.source.clone(),
                             line_number: line.line_number,
-                            file: std::fs::canonicalize(std::path::Path::new(&line.source_file))
-                                .unwrap(),
+                            file: source_file,
                             offset: started_ptr,
                             length: ptr - started_ptr,
                             reason_str: Some(err),
@@ -296,24 +295,21 @@ pub fn parse_token(lines: &[LineInfo]) -> Result<Vec<Token>, ParseError> {
                             typed: TokenType::String(str),
                             line_number: line.line_number,
                             offset: ptr,
-                            file: std::fs::canonicalize(std::path::Path::new(&line.source_file))
-                                .unwrap()
-                                .clone(),
+                            file: source_file.clone(),
                         }
                     }
                 }
             }
-
             // 标识符
             // 以字符或者下划线开头
-            else if chars[ptr].is_alphabetic() || chars[ptr] == '_'{
+            else if chars[ptr].is_alphabetic() || chars[ptr] == '_' {
                 let mut ident = String::new();
 
                 ident.push(chars[ptr]);
                 ptr += 1;
 
                 // 接受以字符，数字，下划线为标识符名称
-                while ptr < chars.len() && (chars[ptr].is_alphanumeric() || chars[ptr] == '_'){
+                while ptr < chars.len() && (chars[ptr].is_alphanumeric() || chars[ptr] == '_') {
                     ident.push(chars[ptr]);
 
                     ptr += 1;
@@ -323,91 +319,65 @@ pub fn parse_token(lines: &[LineInfo]) -> Result<Vec<Token>, ParseError> {
                 ptr -= 1;
 
                 // 检查关键字
-                let typed : TokenType;
+                let typed: TokenType;
 
-                if ident == "target"{
+                if ident == "target" {
                     typed = TokenType::KeywordTarget;
+                } else {
+                    typed = TokenType::Identifier(ident);
                 }
-                else{
-                    typed =TokenType::Identifier(ident);
-                }
-
 
                 // 构建token
                 current = Token {
                     typed,
                     line_number: line.line_number,
                     offset: ptr,
-                    file: std::fs::canonicalize(std::path::Path::new(&line.source_file))
-                        .unwrap()
-                        .clone(),
+                    file: source_file.clone(),
                 }
             }
-
             // 符号
-            else if chars[ptr] == ':'{
-                current = Token{
-                    typed : TokenType::Colon,
+            else if chars[ptr] == ':' {
+                current = Token {
+                    typed: TokenType::Colon,
                     line_number: line.line_number,
                     offset: ptr,
-                    file: std::fs::canonicalize(std::path::Path::new(&line.source_file))
-                        .unwrap()
-                        .clone(),
+                    file: source_file.clone(),
                 }
-            }
-            else if chars[ptr] == '('{
-                current = Token{
-                    typed : TokenType::Parentheses,
+            } else if chars[ptr] == '(' {
+                current = Token {
+                    typed: TokenType::Parentheses,
                     line_number: line.line_number,
                     offset: ptr,
-                    file: std::fs::canonicalize(std::path::Path::new(&line.source_file))
-                        .unwrap()
-                        .clone(),
+                    file: source_file.clone(),
                 }
-            }
-
-            else if chars[ptr] == ')'{
-                current = Token{
-                    typed : TokenType::ParenthesesEnd,
+            } else if chars[ptr] == ')' {
+                current = Token {
+                    typed: TokenType::ParenthesesEnd,
                     line_number: line.line_number,
                     offset: ptr,
-                    file: std::fs::canonicalize(std::path::Path::new(&line.source_file))
-                        .unwrap()
-                        .clone(),
+                    file: source_file.clone(),
                 }
-            }
-
-            else if chars[ptr] == '{'{
-                current = Token{
-                    typed : TokenType::BigParantheses,
+            } else if chars[ptr] == '{' {
+                current = Token {
+                    typed: TokenType::BigParantheses,
                     line_number: line.line_number,
                     offset: ptr,
-                    file: std::fs::canonicalize(std::path::Path::new(&line.source_file))
-                        .unwrap()
-                        .clone(),
+                    file: source_file.clone(),
                 }
-            }
-
-            else if chars[ptr] == '}'{
-                current = Token{
-                    typed : TokenType::BigParanthesesEnd,
+            } else if chars[ptr] == '}' {
+                current = Token {
+                    typed: TokenType::BigParanthesesEnd,
                     line_number: line.line_number,
                     offset: ptr,
-                    file: std::fs::canonicalize(std::path::Path::new(&line.source_file))
-                        .unwrap()
-                        .clone(),
+                    file: source_file.clone(),
                 }
             }
-
-
-
             // 未知的Token
             else {
                 return Err(ParseError {
                     source: line.source.clone(),
                     line_number: line.line_number,
-                    file: std::fs::canonicalize(std::path::Path::new(&line.source_file))
-                        .unwrap(),
+                    file: source_file,
                     offset: ptr,
                     length: 1,
                     reason_str: Some(String::from("Unknown token begin!")),
@@ -426,9 +396,7 @@ pub fn parse_token(lines: &[LineInfo]) -> Result<Vec<Token>, ParseError> {
             typed: TokenType::EndLine,
             line_number: line.line_number,
             offset: ptr,
-            file: std::fs::canonicalize(std::path::Path::new(&line.source_file))
-                .unwrap()
-                .clone(),
+            file: source_file.clone(),
         })
     }
 

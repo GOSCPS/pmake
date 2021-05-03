@@ -37,7 +37,7 @@ pub fn error_line(msg: &str) {
 }
 
 // Print Warning
-pub fn warn_line(msg: String) {
+pub fn warn_line(msg: &str) {
     eprintln!(
         "{} {}:{}",
         "pmake".bold(),
@@ -62,7 +62,7 @@ pub fn help_line(msg: &str) {
 }
 
 // Print Debug
-pub fn debug_line(msg: String) {
+pub fn debug_line(msg: &str) {
     #[cfg(debug_assertions)]
     {
         println!(

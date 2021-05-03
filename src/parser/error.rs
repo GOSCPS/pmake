@@ -8,12 +8,12 @@
 
 use crate::tool;
 use std::path::PathBuf;
-use std::{error::Error, fmt::format};
+use std::{sync::Arc, error::Error};
 
 //解析错误
 #[derive(Debug)]
 pub struct ParseError {
-    pub file: PathBuf,
+    pub file: Arc<PathBuf>,
     pub line_number: usize,
     pub offset: usize,
     pub length: usize,
@@ -31,16 +31,14 @@ impl std::fmt::Display for ParseError {
             &self.file, self.line_number, self.offset
         ));
 
-        tool::printer::error_line(&format!("{}", self.source));
+        tool::printer::error_line(&self.source);
 
-        match &self.reason_str {
-            Some(some) => tool::printer::error_line(&format!("{}", some)),
-            None => (),
+        if let Some(some) = &self.reason_str {
+            tool::printer::error_line(some);
         }
 
-        match &self.help_str {
-            Some(help) => tool::printer::help_line(&format!("{}", help)),
-            None => (),
+        if let Some(some) = &self.help_str {
+            tool::printer::help_line(some);
         }
 
         Ok(())
