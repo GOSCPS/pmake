@@ -13,10 +13,7 @@ use std::panic;
 use std::process;
 use std::sync::Mutex;
 use std::time::Instant;
-use std::{
-    borrow::Borrow, env, fmt::format, ops::Index, string, sync::Arc, thread::sleep, time::Duration,
-    usize,
-};
+use std::{env, ops::Index, sync::Arc, thread::sleep, time::Duration};
 
 mod engine;
 mod parser;
@@ -27,16 +24,16 @@ use tool::printer;
 // 全局变量定义
 lazy_static! {
     // 全局变量表
-    static ref GLOBAL_VARIABLE_TABLE: Mutex<HashMap<String,String>>
-    = Mutex::new(HashMap::new());
+    static ref GLOBAL_VARIABLE_TABLE: Mutex<HashMap<String, String>>
+        = Mutex::new(HashMap::new());
 
     // 全局变量表
     static ref TARGET_LIST: Mutex<Vec<String>>
-    = Mutex::new(Vec::new());
+        = Mutex::new(Vec::new());
 
     // 构建文件名称
     static ref BUILD_FILE_NAME : Mutex<String>
-    = Mutex::new(String::from("pmake.make"));
+        = Mutex::new(String::from("pmake.make"));
 }
 
 // 打印帮助
@@ -45,6 +42,7 @@ fn print_help() {
 
     println!("Usgae:{} [-Options] [Targets]", &args[0]);
     println!("Options:");
+    println!("\t{}\t\t\t{}", "-define=[KEY=VALUE]", "Define a global variable.");
     println!("\t{}\t\t\t{}", "-noLogo", "Not output the logo.");
     println!("\t{}\t\t\t{}", "-help", "Print help then exit.");
     println!("\t{}\t\t\t{}", "-info", "Print info then exit.");
@@ -97,9 +95,7 @@ fn main() {
                 process::exit(0);
             }
             // 全局变量
-            else if arg.starts_with("-define=") {
-                let def = arg.trim_start_matches("-define=");
-
+            else if let Some(def) = arg.strip_prefix("-define=") {
                 let value: String;
                 let name: String;
 
@@ -116,7 +112,7 @@ fn main() {
 
                 // 变量已经定义
                 if GLOBAL_VARIABLE_TABLE.lock().unwrap().contains_key(&name) {
-                    printer::warn_line(format!("The variable `{}` is defined!", name));
+                    printer::warn_line(&format!("The variable `{}` is defined!", name));
 
                     GLOBAL_VARIABLE_TABLE.lock().unwrap().remove(&name);
                 }
@@ -135,8 +131,8 @@ fn main() {
             }
             // 未知参数
             else {
-                printer::error_line(format!("Unknown arg `{}`", &arg));
-                printer::help_line(format!("Use `{} -help` to get help.", args[0]));
+                printer::error_line(&format!("Unknown arg `{}`", &arg));
+                printer::help_line(&format!("Use `{} -help` to get help.", args[0]));
                 process::exit(1);
             }
         }
@@ -149,11 +145,11 @@ fn main() {
     }
 
     // 打印debug信息
-        for pair in GLOBAL_VARIABLE_TABLE.lock().unwrap().iter() {
-            tool::printer::debug_line(format!("variable:`{}`=`{}`", pair.0, pair.1));
-        }
+    for pair in GLOBAL_VARIABLE_TABLE.lock().unwrap().iter() {
+        tool::printer::debug_line(&format!("variable:`{}`=`{}`", pair.0, pair.1));
+    }
 
-        tool::printer::debug_line(format!("build file:{}", BUILD_FILE_NAME.lock().unwrap()));
+    tool::printer::debug_line(&format!("build file:{}", BUILD_FILE_NAME.lock().unwrap()));
 
     // 构建
     let start = Instant::now();
@@ -174,7 +170,7 @@ fn main() {
 
             Ok(tokens) => {
                 for token in tokens.iter() {
-                    tool::printer::debug_line(format!("{:?}", token.typed));
+                    tool::printer::debug_line(&format!("{:?}", token.typed));
                 }
             }
         }
@@ -196,7 +192,7 @@ fn main() {
 
     // 检查结果
     if build_success {
-        printer::ok_line(format!("- finished -"));
+        printer::ok_line("- finished -");
     } else {
         println!("{}", "- failed -".bright_red().bold());
     }

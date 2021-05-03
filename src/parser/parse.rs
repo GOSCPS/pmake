@@ -7,17 +7,10 @@
 //=========================================================
 
 use std::num::ParseIntError;
-use std::panic;
-use std::panic::catch_unwind;
-use std::panic::AssertUnwindSafe;
-use std::str::Chars;
 use std::{
-    char,
-    error::Error,
-    fmt::format,
     ops::Index,
     path::{Path, PathBuf},
-    usize,
+    sync::Arc,
 };
 
 use super::{error::ParseError, preparse::LineInfo};
@@ -42,7 +35,7 @@ pub enum TokenType {
     BigParanthesesEnd,
 
     // :
-    Colon
+    Colon,
 }
 
 // Token
@@ -58,34 +51,34 @@ pub struct Token {
     pub offset: usize,
 
     // Token文件名称
-    pub file: PathBuf,
+    pub file: Arc<PathBuf>,
 }
 
 // 解析数字
 // 输入数字开头
 // [0-9]+
-fn parse_token_number(chars: &Vec<char>, ptr: &mut usize) -> Result<isize, ParseIntError> {
+fn parse_token_number(chars: &[char], ptr: &mut usize) -> Result<isize, ParseIntError> {
     let mut num = String::new();
 
     while ptr < &mut chars.len() && chars[*ptr].is_digit(10) {
         num.push(chars[*ptr]);
-        *ptr = *ptr + 1;
+        *ptr += 1;
     }
 
-    return num.parse::<isize>();
+    num.parse::<isize>()
 }
 
 // 解析字符串
 // 输入字符串开头
 // 同时处理转义
 // "STRING"
-fn parse_token_string(chars: &Vec<char>, ptr: &mut usize) -> Result<String, String> {
+fn parse_token_string(chars: &[char], ptr: &mut usize) -> Result<String, String> {
     let mut str = String::new();
 
     // 检查"
     debug_assert!(chars[*ptr] == '"');
 
-    *ptr = *ptr+1;
+    *ptr += 1;
 
     loop {
         // 提早结束
@@ -93,13 +86,13 @@ fn parse_token_string(chars: &Vec<char>, ptr: &mut usize) -> Result<String, Stri
             return Err(String::from("Not match to the end of the string!"));
         }
         // 结束
-        else if (chars[*ptr] == '"') {
-            *ptr = *ptr + 1;
+        else if chars[*ptr] == '"' {
+            *ptr += 1;
             break;
         }
         // 转义字符
         else if chars[*ptr] == '\\' {
-            *ptr = *ptr + 1;
+            *ptr += 1;
 
             if ptr >= &mut chars.len() {
                 return Err(String::from("The escape character is at the end!"));
@@ -120,7 +113,7 @@ fn parse_token_string(chars: &Vec<char>, ptr: &mut usize) -> Result<String, Stri
 
                 // 读取FFFF
                 'u' => {
-                    *ptr = *ptr + 1;
+                    *ptr += 1;
 
                     let mut uni_str = String::new();
 
@@ -131,7 +124,7 @@ fn parse_token_string(chars: &Vec<char>, ptr: &mut usize) -> Result<String, Stri
                         } else {
                             uni_str.push(chars[*ptr]);
 
-                            *ptr = *ptr + 1;
+                            *ptr += 1;
                         }
                     }
 
@@ -161,7 +154,7 @@ fn parse_token_string(chars: &Vec<char>, ptr: &mut usize) -> Result<String, Stri
 
                 // 读取FFFFFFFF
                 'U' => {
-                    *ptr = *ptr + 1;
+                    *ptr += 1;
 
                     let mut uni_str = String::new();
 
@@ -172,7 +165,7 @@ fn parse_token_string(chars: &Vec<char>, ptr: &mut usize) -> Result<String, Stri
                         } else {
                             uni_str.push(chars[*ptr]);
 
-                            *ptr = *ptr + 1;
+                            *ptr += 1;
                         }
                     }
 
@@ -213,18 +206,20 @@ fn parse_token_string(chars: &Vec<char>, ptr: &mut usize) -> Result<String, Stri
             str.push(chars[*ptr]);
         }
 
-        *ptr = *ptr + 1;
+        *ptr += 1;
     }
 
-    return Ok(str);
+    Ok(str)
 }
 
 // 解析token
-pub fn parse_token(lines: &Vec<LineInfo>) -> Result<Vec<Token>, ParseError> {
+pub fn parse_token(lines: &[LineInfo]) -> Result<Vec<Token>, ParseError> {
     let mut tokens: Vec<Token> = Vec::new();
 
     // 遍历每一行
     for line in lines.iter() {
+        let source_file = Arc::new(std::fs::canonicalize(&*line.source_file).unwrap());
+
         // 字符数组
         let chars: Vec<char> = line.source.chars().collect();
 
@@ -234,12 +229,12 @@ pub fn parse_token(lines: &Vec<LineInfo>) -> Result<Vec<Token>, ParseError> {
         // 挨个字符解析
         while ptr < chars.len() {
             // 解析到的Token
-            let mut current: Token;
+            let current: Token;
 
             // 空格 or 控制字符
             // 忽略
             if chars[ptr].is_whitespace() || chars[ptr].is_control() {
-                ptr = ptr + 1;
+                ptr += 1;
                 continue;
             }
             // 数字
@@ -254,9 +249,7 @@ pub fn parse_token(lines: &Vec<LineInfo>) -> Result<Vec<Token>, ParseError> {
                         return Err(ParseError {
                             source: line.source.clone(),
                             line_number: line.line_number,
-                            file: std::fs::canonicalize(std::path::Path::new(&line.source_file))
-                                .unwrap()
-                                .clone(),
+                            file: source_file,
                             offset: started_ptr,
                             length: ptr - started_ptr,
                             reason_str: Some(String::from("The digit parse error!")),
@@ -270,9 +263,7 @@ pub fn parse_token(lines: &Vec<LineInfo>) -> Result<Vec<Token>, ParseError> {
                             typed: TokenType::Number(num),
                             line_number: line.line_number,
                             offset: ptr,
-                            file: std::fs::canonicalize(std::path::Path::new(&line.source_file))
-                                .unwrap()
-                                .clone(),
+                            file: source_file.clone(),
                         }
                     }
                 }
@@ -289,9 +280,7 @@ pub fn parse_token(lines: &Vec<LineInfo>) -> Result<Vec<Token>, ParseError> {
                         return Err(ParseError {
                             source: line.source.clone(),
                             line_number: line.line_number,
-                            file: std::fs::canonicalize(std::path::Path::new(&line.source_file))
-                                .unwrap()
-                                .clone(),
+                            file: source_file,
                             offset: started_ptr,
                             length: ptr - started_ptr,
                             reason_str: Some(err),
@@ -306,119 +295,89 @@ pub fn parse_token(lines: &Vec<LineInfo>) -> Result<Vec<Token>, ParseError> {
                             typed: TokenType::String(str),
                             line_number: line.line_number,
                             offset: ptr,
-                            file: std::fs::canonicalize(std::path::Path::new(&line.source_file))
-                                .unwrap()
-                                .clone(),
+                            file: source_file.clone(),
                         }
                     }
                 }
             }
-
             // 标识符
             // 以字符或者下划线开头
-            else if chars[ptr].is_alphabetic() || chars[ptr] == '_'{
+            else if chars[ptr].is_alphabetic() || chars[ptr] == '_' {
                 let mut ident = String::new();
 
                 ident.push(chars[ptr]);
-                ptr = ptr+1;
+                ptr += 1;
 
                 // 接受以字符，数字，下划线为标识符名称
-                while ptr < chars.len() && (chars[ptr].is_alphanumeric() || chars[ptr] == '_'){
+                while ptr < chars.len() && (chars[ptr].is_alphanumeric() || chars[ptr] == '_') {
                     ident.push(chars[ptr]);
 
-                    ptr = ptr+1;
+                    ptr += 1;
                 }
                 // 已经移动到标识符末尾
                 // 移回
-                ptr = ptr-1;
+                ptr -= 1;
 
                 // 检查关键字
-                let mut typed : TokenType;
+                let typed: TokenType;
 
-                if ident == "target"{
+                if ident == "target" {
                     typed = TokenType::KeywordTarget;
+                } else {
+                    typed = TokenType::Identifier(ident);
                 }
-                else{
-                    typed =TokenType::Identifier(ident);
-                }
-
 
                 // 构建token
                 current = Token {
                     typed,
                     line_number: line.line_number,
                     offset: ptr,
-                    file: std::fs::canonicalize(std::path::Path::new(&line.source_file))
-                        .unwrap()
-                        .clone(),
+                    file: source_file.clone(),
                 }
             }
-
             // 符号
-            else if chars[ptr] == ':'{
-                current = Token{
-                    typed : TokenType::Colon,
+            else if chars[ptr] == ':' {
+                current = Token {
+                    typed: TokenType::Colon,
                     line_number: line.line_number,
                     offset: ptr,
-                    file: std::fs::canonicalize(std::path::Path::new(&line.source_file))
-                        .unwrap()
-                        .clone(),
+                    file: source_file.clone(),
                 }
-            }
-            else if chars[ptr] == '('{
-                current = Token{
-                    typed : TokenType::Parentheses,
+            } else if chars[ptr] == '(' {
+                current = Token {
+                    typed: TokenType::Parentheses,
                     line_number: line.line_number,
                     offset: ptr,
-                    file: std::fs::canonicalize(std::path::Path::new(&line.source_file))
-                        .unwrap()
-                        .clone(),
+                    file: source_file.clone(),
                 }
-            }
-
-            else if chars[ptr] == ')'{
-                current = Token{
-                    typed : TokenType::ParenthesesEnd,
+            } else if chars[ptr] == ')' {
+                current = Token {
+                    typed: TokenType::ParenthesesEnd,
                     line_number: line.line_number,
                     offset: ptr,
-                    file: std::fs::canonicalize(std::path::Path::new(&line.source_file))
-                        .unwrap()
-                        .clone(),
+                    file: source_file.clone(),
                 }
-            }
-
-            else if chars[ptr] == '{'{
-                current = Token{
-                    typed : TokenType::BigParantheses,
+            } else if chars[ptr] == '{' {
+                current = Token {
+                    typed: TokenType::BigParantheses,
                     line_number: line.line_number,
                     offset: ptr,
-                    file: std::fs::canonicalize(std::path::Path::new(&line.source_file))
-                        .unwrap()
-                        .clone(),
+                    file: source_file.clone(),
                 }
-            }
-
-            else if chars[ptr] == '}'{
-                current = Token{
-                    typed : TokenType::BigParanthesesEnd,
+            } else if chars[ptr] == '}' {
+                current = Token {
+                    typed: TokenType::BigParanthesesEnd,
                     line_number: line.line_number,
                     offset: ptr,
-                    file: std::fs::canonicalize(std::path::Path::new(&line.source_file))
-                        .unwrap()
-                        .clone(),
+                    file: source_file.clone(),
                 }
             }
-
-
-
             // 未知的Token
             else {
                 return Err(ParseError {
                     source: line.source.clone(),
                     line_number: line.line_number,
-                    file: std::fs::canonicalize(std::path::Path::new(&line.source_file))
-                        .unwrap()
-                        .clone(),
+                    file: source_file,
                     offset: ptr,
                     length: 1,
                     reason_str: Some(String::from("Unknown token begin!")),
@@ -429,7 +388,7 @@ pub fn parse_token(lines: &Vec<LineInfo>) -> Result<Vec<Token>, ParseError> {
 
             // 提交token & 增加指针
             tokens.push(current);
-            ptr = ptr + 1;
+            ptr += 1;
         }
 
         // 行末
@@ -437,11 +396,9 @@ pub fn parse_token(lines: &Vec<LineInfo>) -> Result<Vec<Token>, ParseError> {
             typed: TokenType::EndLine,
             line_number: line.line_number,
             offset: ptr,
-            file: std::fs::canonicalize(std::path::Path::new(&line.source_file))
-                .unwrap()
-                .clone(),
+            file: source_file.clone(),
         })
     }
 
-    return Ok(tokens);
+    Ok(tokens)
 }

@@ -32,12 +32,12 @@ pub fn help(msg : String){
 /* Print for a line */
 
 // Print Error
-pub fn error_line(msg: String) {
+pub fn error_line(msg: &str) {
     eprintln!("{} {}:{}", "pmake".bold(), "error".bright_red().bold(), msg);
 }
 
 // Print Warning
-pub fn warn_line(msg: String) {
+pub fn warn_line(msg: &str) {
     eprintln!(
         "{} {}:{}",
         "pmake".bold(),
@@ -47,12 +47,12 @@ pub fn warn_line(msg: String) {
 }
 
 // Print Ok
-pub fn ok_line(msg: String) {
+pub fn ok_line(msg: &str) {
     println!("{}", &msg.green().bold());
 }
 
 // Print Help
-pub fn help_line(msg: String) {
+pub fn help_line(msg: &str) {
     println!(
         "{} {}:{}",
         "pmake".bold(),
@@ -62,7 +62,7 @@ pub fn help_line(msg: String) {
 }
 
 // Print Debug
-pub fn debug_line(msg: String) {
+pub fn debug_line(msg: &str) {
     #[cfg(debug_assertions)]
     {
         println!(
@@ -71,10 +71,5 @@ pub fn debug_line(msg: String) {
             "debug".bright_purple().bold(),
             msg
         );
-    }
-    #[cfg(not(debug_assertions))]
-    {
-        // No doing sth
-        ();
     }
 }

@@ -8,53 +8,45 @@
 
 use crate::tool;
 use std::path::PathBuf;
-use std::{error::Error, fmt::format};
+use std::{sync::Arc, error::Error};
 
 //解析错误
 #[derive(Debug)]
 pub struct ParseError {
-    pub file: PathBuf,
+    pub file: Arc<PathBuf>,
     pub line_number: usize,
     pub offset: usize,
     pub length: usize,
     pub source: String,
-    pub reason_err: Option<Box<Error>>,
+    pub reason_err: Option<Box<dyn Error>>,
     pub reason_str: Option<String>,
     pub help_str: Option<String>,
 }
 
 // 实现Display的trait
 impl std::fmt::Display for ParseError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        tool::printer::error_line(format!(
+    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        tool::printer::error_line(&format!(
             "At File {:?} Lines {} Offset {}:",
             &self.file, self.line_number, self.offset
         ));
 
-        tool::printer::error_line(format!("{}", self.source));
+        tool::printer::error_line(&self.source);
 
-        match &self.reason_str {
-            Some(some) => tool::printer::error_line(format!("{}", some)),
-
-            _ => (),
+        if let Some(some) = &self.reason_str {
+            tool::printer::error_line(some);
         }
 
-        match &self.help_str {
-            Some(help) => tool::printer::help_line(format!("{}", help)),
-
-            _ => (),
+        if let Some(some) = &self.help_str {
+            tool::printer::help_line(some);
         }
 
-        return Ok(());
+        Ok(())
     }
 }
 
 impl std::error::Error for ParseError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        return match (&self.reason_err) {
-            Some(some) => Some(&**some),
-
-            None => return None,
-        };
+        self.reason_err.as_deref()
     }
 }

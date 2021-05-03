@@ -8,7 +8,7 @@
 
 use std::collections::HashMap;
 use std::fs;
-use std::sync::Mutex;
+use std::{sync::{Mutex, Arc}, path::PathBuf};
 
 // 行信息
 pub struct LineInfo {
@@ -19,7 +19,7 @@ pub struct LineInfo {
     pub line_number: usize,
 
     // 源文件
-    pub source_file: String,
+    pub source_file: Arc<PathBuf>,
 }
 
 use lazy_static::lazy_static;
@@ -32,7 +32,7 @@ lazy_static! {
 pub fn pre_parse(file_name: String) -> Result<Vec<LineInfo>, String> {
     // 读取文件
     let context =
-        fs::read_to_string(file_name.clone()).expect(format!("`{}`\n", &file_name).as_str());
+        fs::read_to_string(&file_name).unwrap_or_else(|_| panic!("`{}`\n", &file_name));
 
     // 行号
     let mut line_number: usize = 1_usize;
@@ -59,18 +59,18 @@ pub fn pre_parse(file_name: String) -> Result<Vec<LineInfo>, String> {
         else {
             let line = LineInfo {
                 source: current_line_source.clone(),
-                line_number: line_number,
-                source_file: file_name.clone(),
+                line_number,
+                source_file: Arc::new(PathBuf::from(&file_name)),
             };
 
             total_lines.push(line);
 
             // 继续读取下一行
             current_line_source.clear();
-            line_number = line_number + 1;
+            line_number += 1;
         }
     }
 
     // 返回
-    return Ok(total_lines);
+    Ok(total_lines)
 }
