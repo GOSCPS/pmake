@@ -14,8 +14,7 @@ use std::process;
 use std::sync::Mutex;
 use std::time::Instant;
 use std::{
-    borrow::Borrow, env, fmt::format, ops::Index, string, sync::Arc, thread::sleep, time::Duration,
-    usize,
+    env, ops::Index, sync::Arc, thread::sleep, time::Duration,
 };
 
 mod engine;
@@ -135,8 +134,8 @@ fn main() {
             }
             // 未知参数
             else {
-                printer::error_line(format!("Unknown arg `{}`", &arg));
-                printer::help_line(format!("Use `{} -help` to get help.", args[0]));
+                printer::error_line(&format!("Unknown arg `{}`", &arg));
+                printer::help_line(&format!("Use `{} -help` to get help.", args[0]));
                 process::exit(1);
             }
         }
@@ -196,7 +195,7 @@ fn main() {
 
     // 检查结果
     if build_success {
-        printer::ok_line(format!("- finished -"));
+        printer::ok_line("- finished -");
     } else {
         println!("{}", "- failed -".bright_red().bold());
     }

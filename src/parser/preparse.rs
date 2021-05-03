@@ -32,7 +32,7 @@ lazy_static! {
 pub fn pre_parse(file_name: String) -> Result<Vec<LineInfo>, String> {
     // 读取文件
     let context =
-        fs::read_to_string(file_name.clone()).expect(format!("`{}`\n", &file_name).as_str());
+        fs::read_to_string(file_name.clone()).unwrap_or_else(|_| panic!("`{}`\n", &file_name));
 
     // 行号
     let mut line_number: usize = 1_usize;
@@ -67,10 +67,10 @@ pub fn pre_parse(file_name: String) -> Result<Vec<LineInfo>, String> {
 
             // 继续读取下一行
             current_line_source.clear();
-            line_number = line_number + 1;
+            line_number += 1;
         }
     }
 
     // 返回
-    return Ok(total_lines);
+    Ok(total_lines)
 }
