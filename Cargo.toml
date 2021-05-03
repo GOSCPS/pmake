@@ -1,0 +1,13 @@
+[package]
+name = "pmake"
+version = "0.1.0"
+edition = "2018"
+authors = ["GOSCPS Team <goscps@foxmail.com>"]
+homepage = "https://github.com/GOSCPS/pmake"
+license = "GOSCPS License v3"
+
+[dependencies]
+colored = "2.0.0"
+lazy_static = "1.4.0"
+console = "0.14.1"
+indicatif = {version = "0.16.0",features=["improved_unicode"]}
