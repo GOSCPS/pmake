@@ -8,7 +8,10 @@
 
 use std::collections::HashMap;
 use std::fs;
-use std::{sync::{Mutex, Arc}, path::PathBuf};
+use std::{
+    path::PathBuf,
+    sync::{Arc, Mutex},
+};
 
 // 行信息
 pub struct LineInfo {
@@ -22,17 +25,10 @@ pub struct LineInfo {
     pub source_file: Arc<PathBuf>,
 }
 
-use lazy_static::lazy_static;
-
-lazy_static! {
-    static ref INCLUDED_FILE: Mutex<HashMap<String, ()>> = Mutex::new(HashMap::new());
-}
-
 // 解析源文件
-pub fn pre_parse(file_name: String) -> Result<Vec<LineInfo>, String> {
+pub fn pre_parse(file_name: &String) -> Result<Vec<LineInfo>, String> {
     // 读取文件
-    let context =
-        fs::read_to_string(&file_name).unwrap_or_else(|_| panic!("`{}`\n", &file_name));
+    let context = fs::read_to_string(file_name).unwrap_or_else(|_| panic!("`{}`\n", file_name));
 
     // 行号
     let mut line_number: usize = 1_usize;
@@ -71,6 +67,17 @@ pub fn pre_parse(file_name: String) -> Result<Vec<LineInfo>, String> {
         }
     }
 
+    // 去除注释
+    let mut output:Vec<LineInfo> = Vec::new();
+
+    for line in total_lines.into_iter(){
+        // 非注释
+        // 添加
+        if !line.source.trim_start().starts_with('#'){
+            output.push(line);
+        }
+    }
+
     // 返回
-    Ok(total_lines)
+    Ok(output)
 }

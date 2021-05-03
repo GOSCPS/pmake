@@ -7,7 +7,6 @@
 //=========================================================
 
 use colored::*;
-use std::io::*;
 
 // Print Error
 /*pub fn error(msg : String){
@@ -48,7 +47,12 @@ pub fn warn_line(msg: &str) {
 
 // Print Ok
 pub fn ok_line(msg: &str) {
-    println!("{}", &msg.green().bold());
+    println!(
+        "{} {}:{}",
+        "pmake".bold(),
+        "ok   ".bright_green().bold(),
+        &msg
+    );
 }
 
 // Print Help

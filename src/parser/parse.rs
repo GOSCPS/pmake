@@ -7,11 +7,7 @@
 //=========================================================
 
 use std::num::ParseIntError;
-use std::{
-    ops::Index,
-    path::{Path, PathBuf},
-    sync::Arc,
-};
+use std::{path::PathBuf, sync::Arc};
 
 use super::{error::ParseError, preparse::LineInfo};
 
@@ -36,10 +32,13 @@ pub enum TokenType {
 
     // :
     Colon,
+
+    // =
+    EqualSign,
 }
 
 // Token
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Token {
     // Token类型
     pub typed: TokenType,
@@ -99,7 +98,7 @@ fn parse_token_string(chars: &[char], ptr: &mut usize) -> Result<String, String>
             }
 
             match chars[*ptr] {
-                '\\' => str.push('"'),
+                '\\' => str.push('\\'),
 
                 't' => str.push('\t'),
 
@@ -206,6 +205,7 @@ fn parse_token_string(chars: &[char], ptr: &mut usize) -> Result<String, String>
             str.push(chars[*ptr]);
         }
 
+        // 移动指针
         *ptr += 1;
     }
 
@@ -367,6 +367,13 @@ pub fn parse_token(lines: &[LineInfo]) -> Result<Vec<Token>, ParseError> {
             } else if chars[ptr] == '}' {
                 current = Token {
                     typed: TokenType::BigParanthesesEnd,
+                    line_number: line.line_number,
+                    offset: ptr,
+                    file: source_file.clone(),
+                }
+            } else if chars[ptr] == '=' {
+                current = Token {
+                    typed: TokenType::EqualSign,
                     line_number: line.line_number,
                     offset: ptr,
                     file: source_file.clone(),

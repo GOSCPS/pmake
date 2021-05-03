@@ -1,10 +1,24 @@
-165465165 
-4684786
 
-想不到吧
-我是一个标识符461_asdasd
+# 输出构建信息
+sh echo "Build at $$pwd"
 
-486487
-"\uFFFF"
-"\rasd;\t\n\"\'"
-5165148687
+if !isDef("cc"){
+    glodef cc = "clang"
+}
+
+rule compileC : cc source flags output{
+    sh $cc $source $flags $output
+}
+
+target name : deps1 deps2 deps3{
+    def source = "main.c"
+    def flasgs = "-O3"
+    def output = "main"
+
+    source compileC
+}
+
+
+
+
+
