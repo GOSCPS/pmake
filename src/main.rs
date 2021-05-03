@@ -42,6 +42,7 @@ fn print_help() {
 
     println!("Usgae:{} [-Options] [Targets]", &args[0]);
     println!("Options:");
+    println!("\t{}\t\t\t{}", "-define=[KEY=VALUE]", "Define a global variable.");
     println!("\t{}\t\t\t{}", "-noLogo", "Not output the logo.");
     println!("\t{}\t\t\t{}", "-help", "Print help then exit.");
     println!("\t{}\t\t\t{}", "-info", "Print info then exit.");
@@ -94,9 +95,7 @@ fn main() {
                 process::exit(0);
             }
             // 全局变量
-            else if arg.starts_with("-define=") {
-                let def = arg.trim_start_matches("-define=");
-
+            else if let Some(def) = arg.strip_prefix("-define=") {
                 let value: String;
                 let name: String;
 
