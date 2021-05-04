@@ -15,19 +15,13 @@ use std::sync::Arc;
 
 // 抽象语法树
 pub trait Ast {
-    fn execute(
-        &self,
-        context: &mut Context,
-    ) -> Result<variable::Variable, error::RuntimeError>;
+    fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError>;
 }
 
 pub struct NopAst {}
 
 impl Ast for NopAst {
-    fn execute(
-        &self,
-        context: &mut Context,
-    ) -> Result<variable::Variable, error::RuntimeError> {
+    fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
         Ok(Variable {
             name: Arc::from("# Temporary value from NopAST #".to_string()),
             typed: variable::VariableType::None,
@@ -42,10 +36,7 @@ pub struct AssignmentAst {
 }
 
 impl Ast for AssignmentAst {
-    fn execute(
-        &self,
-        context: &mut Context,
-    ) -> Result<variable::Variable, error::RuntimeError> {
+    fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
         match self.value.execute(context) {
             Ok(ok) => {
                 // 全局变量
@@ -77,10 +68,7 @@ pub struct ImmediateAst {
 }
 
 impl Ast for ImmediateAst {
-    fn execute(
-        &self,
-        context: &mut Context,
-    ) -> Result<variable::Variable, error::RuntimeError> {
+    fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
         return Ok(self.immediate.clone());
     }
 }
@@ -90,10 +78,7 @@ pub struct BlockAst {
 }
 
 impl Ast for BlockAst {
-    fn execute(
-        &self,
-        context: &mut Context,
-    ) -> Result<variable::Variable, error::RuntimeError> {
+    fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
         let mut var: Variable = Variable::none_value();
 
         for ast in &self.blocks {
@@ -114,10 +99,7 @@ pub struct GetVariableAst {
 }
 
 impl Ast for GetVariableAst {
-    fn execute(
-        &self,
-        context: &mut Context,
-    ) -> Result<variable::Variable, error::RuntimeError> {
+    fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
         // 从本地变量获取
         if context
             .variable_table
@@ -180,10 +162,7 @@ pub struct ExprAst {
 }
 
 impl Ast for ExprAst {
-    fn execute(
-        &self,
-        context: &mut Context,
-    ) -> Result<variable::Variable, error::RuntimeError> {
+    fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
         // 特殊的操作
         if let ExprOp::Left = self.op {
             return self.left.execute(context);
@@ -324,44 +303,37 @@ impl Ast for ExprAst {
 }
 
 // 函数调用Ast
-pub struct CallAst{
-    pub name : String,
-    pub args : Vec<Box<dyn Ast>>
+pub struct CallAst {
+    pub name: String,
+    pub args: Vec<Box<dyn Ast>>,
 }
 
-impl Ast for CallAst{
-
-    fn execute(
-        &self,
-        context: &mut Context,
-    ) -> Result<variable::Variable, error::RuntimeError>{
-
-        match super::super::context::GLOBAL_FUNCTION.get(&self.name)
-        {
+impl Ast for CallAst {
+    fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
+        match super::super::context::GLOBAL_FUNCTION.lock().unwrap().get(&self.name) {
             Some(some) => {
-                let mut arg_value : Vec<Variable> = Vec::new();
+                let mut arg_value: Vec<Variable> = Vec::new();
 
                 // 检索参数
-                for arg in self.args.iter(){
-                    match (**arg).execute(context){
+                for arg in self.args.iter() {
+                    match (**arg).execute(context) {
                         Err(err) => return Err(err),
 
-                        Ok(ok) => arg_value.push(ok)
+                        Ok(ok) => arg_value.push(ok),
                     }
                 }
 
-                return (*some).lock().unwrap().execute(&arg_value,context);
+                return (*some).lock().unwrap().execute(&arg_value, context);
             }
 
-            None =>{
-                return Err(RuntimeError{
-                    reason_token : None,
-                    reason_err : None,
-                    reason_str : Some(format!("The function `{}` not found!",self.name)),
-                    help_str : Some("Check the function name!".to_string())
+            None => {
+                return Err(RuntimeError {
+                    reason_token: None,
+                    reason_err: None,
+                    reason_str: Some(format!("The function `{}` not found!", self.name)),
+                    help_str: Some("Check the function name!".to_string()),
                 })
             }
         }
     }
-
 }

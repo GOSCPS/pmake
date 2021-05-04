@@ -75,6 +75,7 @@ pub fn parse_file(file_name: &String) -> Result<PFile, ParseError> {
                 reason_str: Some(String::from("Unknown Statement type!")),
                 reason_err: None,
                 help_str: Some(String::from("Defined a target or a rule or a statement.")),
+                reason_token: None,
             });
         }
         // TODO 收集target

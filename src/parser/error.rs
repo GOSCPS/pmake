@@ -6,7 +6,7 @@
 // Copyright (c) 2020-2021 GOSCPS 保留所有权利.
 //=========================================================
 
-use crate::tool;
+use crate::{parser::parse::Token, tool};
 use std::path::PathBuf;
 use std::{error::Error, sync::Arc};
 
@@ -21,6 +21,7 @@ pub struct ParseError {
     pub reason_err: Option<Box<dyn Error>>,
     pub reason_str: Option<String>,
     pub help_str: Option<String>,
+    pub reason_token: Option<Token>,
 }
 
 // 实现Display的trait
@@ -39,6 +40,10 @@ impl std::fmt::Display for ParseError {
 
         if let Some(some) = &self.help_str {
             tool::printer::help_line(some);
+        }
+
+        if let Some(some) = &self.reason_token {
+            tool::printer::error_line(&format!("From token:{:?}", some));
         }
 
         Ok(())

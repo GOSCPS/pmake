@@ -8,9 +8,9 @@
 
 use crate::engine::{function::Function, variable::Variable};
 use lazy_static::lazy_static;
-use std::{collections::HashMap, sync::Arc};
-use std::sync::RwLock;
 use std::sync::Mutex;
+use std::sync::RwLock;
+use std::{collections::HashMap, sync::Arc};
 
 // 上下文
 pub struct Context {
@@ -32,6 +32,6 @@ lazy_static! {
     : Context = Context::new();
 
     pub static ref GLOBAL_FUNCTION
-    : Arc<HashMap<String,Mutex<Box<dyn Function>>>>
-    = Arc::from(HashMap::new());
+    : Mutex<HashMap<String,Mutex<Box<dyn Function>>>>
+    = Mutex::from(HashMap::new());
 }

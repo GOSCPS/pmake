@@ -270,6 +270,7 @@ pub fn parse_token(lines: &[LineInfo]) -> Result<Vec<Token>, ParseError> {
                             reason_str: Some(String::from("The digit parse error!")),
                             reason_err: Some(Box::new(err)),
                             help_str: Some(String::from("The digit may too big.")),
+                            reason_token: None,
                         })
                     }
 
@@ -289,6 +290,10 @@ pub fn parse_token(lines: &[LineInfo]) -> Result<Vec<Token>, ParseError> {
                 let started_ptr = ptr;
                 let str_result = parse_token_string(&chars, &mut ptr);
 
+                // 我们已经移动到string末尾了呢
+                // 移动回去
+                ptr -= 1;
+
                 match str_result {
                     // 太差太差
                     Err(err) => {
@@ -301,6 +306,7 @@ pub fn parse_token(lines: &[LineInfo]) -> Result<Vec<Token>, ParseError> {
                             reason_str: Some(err),
                             reason_err: None,
                             help_str: None,
+                            reason_token: None,
                         })
                     }
 
@@ -453,6 +459,7 @@ pub fn parse_token(lines: &[LineInfo]) -> Result<Vec<Token>, ParseError> {
                     reason_str: Some(String::from("Unknown token begin!")),
                     reason_err: None,
                     help_str: None,
+                    reason_token: None,
                 });
             }
 

@@ -143,11 +143,16 @@ pub fn parse_statement(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseEr
         return parse_statement_assignment(tokens);
     }
 
+    // 表达式
+    else {
+        let result= parse_expression(tokens);
 
-    // 未知语句
-    else{
-        return Err(tokens.generate_error(
-            Some("Unknown statement!".to_string()),
-            None));
+        if !tokens.is_end() && tokens.get_current().typed != TokenType::EndLine{
+            return Err(tokens.generate_error(
+                Some("Unexpected token.".to_string()),
+                None
+            ));
+        }
+        return result;
     }
 }

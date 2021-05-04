@@ -5,7 +5,6 @@
 // Content: pmake main source code
 // Copyright (c) 2020-2021 GOSCPS 保留所有权利.
 //=========================================================
-
 use colored::*;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
@@ -17,8 +16,8 @@ use std::time::Instant;
 
 mod engine;
 mod parser;
-mod tool;
 mod standard;
+mod tool;
 
 use tool::printer;
 
@@ -160,6 +159,12 @@ fn main() {
     // 构建
     let start = Instant::now();
     let mut build_success = true;
+
+    // 添加标准库
+    crate::engine::context::GLOBAL_FUNCTION.lock().unwrap().insert(
+        "print".to_string(),
+        Mutex::new(Box::new(standard::print::Print {})),
+    );
 
     // 构建
     // 同时捕获panic

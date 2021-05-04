@@ -41,7 +41,7 @@ impl TokenStream {
         loop {
             if self.is_end() {
                 break;
-            } else if let TokenType::EndLine = self.get_current().typed {
+            } else if TokenType::EndLine == self.get_current().typed {
                 self.next();
             } else {
                 break;
@@ -64,6 +64,7 @@ impl TokenStream {
                 reason_str,
                 reason_err: None,
                 help_str,
+                reason_token: Some(self.get_last().clone()),
             }
         } else {
             ParseError {
@@ -75,6 +76,7 @@ impl TokenStream {
                 reason_str,
                 reason_err: None,
                 help_str,
+                reason_token: Some(self.get_current().clone()),
             }
         }
     }
