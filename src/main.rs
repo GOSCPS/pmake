@@ -5,7 +5,6 @@
 // Content: pmake main source code
 // Copyright (c) 2020-2021 GOSCPS 保留所有权利.
 //=========================================================
-use colored::*;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::env;
@@ -179,7 +178,7 @@ fn main() {
                         tool::printer::debug_line(&format!("\timport:{}", deps));
                     }
 
-                    rule.body.execute(&mut Context::new());
+                    rule.body.execute(&mut Context::new()).unwrap();
                 }
 
                 "".to_string()

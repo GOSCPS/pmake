@@ -6,20 +6,18 @@
 // Copyright (c) 2020-2021 GOSCPS 保留所有权利.
 //=========================================================
 
-use crate::engine::ast::ast::{BlockAst, ExprAst, ExprOp};
-use crate::engine::rule::Rule;
+use crate::engine::ast::ast::{ExprAst, ExprOp};
 use crate::engine::{
     ast::ast::{Ast, CallAst, GetVariableAst, ImmediateAst, NopAst},
     variable::Variable,
     variable::VariableType,
 };
-use crate::engine::{pfile, rule, target};
 use crate::parser::error::ParseError;
 use crate::parser::parse::Token;
 use crate::parser::parse::TokenType;
 use crate::parser::parsing::utility::TokenStream;
 use std::convert::TryFrom;
-use std::{convert, sync::Arc};
+use std::{sync::Arc};
 
 // 表达式解析从这里开始
 // + -
@@ -267,7 +265,7 @@ fn parse_expression_top(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseE
             immediate: Variable {
                 name: Arc::from("# ImmediateAst #"),
                 typed: VariableType::Number(match i64::try_from(num) {
-                    Err(err) => {
+                    Err(_err) => {
                         return Err(tokens.generate_error(
                             Some("Try to convert isize to i64 filed!".to_string()),
                             None,

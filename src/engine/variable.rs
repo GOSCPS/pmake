@@ -25,14 +25,6 @@ pub struct Variable {
 }
 
 impl Variable {
-    pub fn to_string(&self) -> String {
-        return match &self.typed {
-            VariableType::None => String::from(" "),
-            VariableType::Str(value) => value.to_string(),
-            VariableType::Number(num) => num.to_string(),
-            VariableType::Boolean(boolean) => boolean.to_string(),
-        };
-    }
 
     pub fn none_value() -> Variable {
         Variable {

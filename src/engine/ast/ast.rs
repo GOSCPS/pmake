@@ -21,7 +21,7 @@ pub trait Ast {
 pub struct NopAst {}
 
 impl Ast for NopAst {
-    fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
+    fn execute(&self, _context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
         Ok(Variable {
             name: Arc::from("# Temporary value from NopAST #".to_string()),
             typed: variable::VariableType::None,
@@ -68,7 +68,7 @@ pub struct ImmediateAst {
 }
 
 impl Ast for ImmediateAst {
-    fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
+    fn execute(&self, _context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
         return Ok(self.immediate.clone());
     }
 }

@@ -7,8 +7,8 @@
 //=========================================================
 
 use crate::tool;
-use crate::{engine::ast::ast::Ast, parser::parse::Token};
-use std::{error::Error, sync::Arc};
+use crate::{parser::parse::Token};
+use std::{error::Error};
 
 //解析错误
 #[derive(Debug)]

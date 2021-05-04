@@ -45,8 +45,8 @@ pub fn parse_file(file_name: &String) -> Result<PFile, ParseError> {
     };
 
     let mut rule_list: Vec<Rule> = Vec::new();
-    let mut target_list: Vec<Target> = Vec::new();
-    let mut statement_list: Vec<Box<dyn Ast>> = Vec::new();
+    let target_list: Vec<Target> = Vec::new();
+    let statement_list: Vec<Box<dyn Ast>> = Vec::new();
 
     loop {
         // 收集rule

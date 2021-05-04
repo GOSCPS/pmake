@@ -104,7 +104,7 @@ pub fn parse_statement(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseEr
     else if tokens.get_current().typed == TokenType::BigParantheses{
         tokens.next();
 
-        let mut blocks : Vec<Box<Ast>> = Vec::new();
+        let mut blocks : Vec<Box<dyn Ast>> = Vec::new();
 
         // 收集语句
         loop{

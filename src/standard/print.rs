@@ -7,11 +7,10 @@
 //=========================================================
 
 use crate::engine::{context::Context, error, variable,variable::Variable};
-use std::sync::Arc;
 
 pub fn print(
         args: Vec<variable::Variable>,
-        context:&mut Context,
+        _context:&mut Context,
     ) -> Result<variable::Variable, error::RuntimeError> {
         for arg in args {
             match &arg.typed {
@@ -30,10 +29,6 @@ pub fn print(
                 variable::VariableType::Str(str) => {
                     print!("{}", str.clone())
                 }
-
-                _ => {
-                    print!("{}", "`UNKNOWN TYPE`")
-                }
             }
         }
 
@@ -44,8 +39,10 @@ pub fn print(
         args: Vec<variable::Variable>,
         context: &mut Context,
     ) -> Result<variable::Variable, error::RuntimeError> {
-        
-        print(args,context);
+
+        if let Err(err) = print(args,context){
+            return Err(err);
+        }
         print!("\n");
 
         return Ok(Variable::none_value());
