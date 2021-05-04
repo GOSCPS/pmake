@@ -10,10 +10,10 @@ use crate::engine::target::Target;
 use crate::engine::{ast::ast::Ast, rule::Rule};
 use std::path::PathBuf;
 
-//文件
+// 文件
 pub struct PFile {
     pub file: PathBuf,
     pub rules: Vec<Rule>,
     pub targets: Vec<Target>,
-    pub global_statements: Vec<Box<Ast>>,
+    pub global_statements: Vec<Box<dyn Ast>>,
 }

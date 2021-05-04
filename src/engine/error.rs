@@ -24,8 +24,8 @@ impl std::fmt::Display for RuntimeError {
     fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(some) = &self.reason_token {
             tool::printer::error_line(&format!(
-                "At File {:?} Lines {} Offset {}",
-                &some.file, &some.line_number, &some.offset
+                "At File `{}`, line `{}`, offset `{}`",
+                &some.file.to_string_lossy(), &some.line_number, &some.offset
             ));
             tool::printer::error_line(&format!("{:?}", &some.typed));
         }

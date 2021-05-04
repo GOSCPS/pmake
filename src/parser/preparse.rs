@@ -71,9 +71,11 @@ pub fn pre_parse(file_name: &String) -> Result<Vec<LineInfo>, String> {
     let mut output: Vec<LineInfo> = Vec::new();
 
     for line in total_lines.into_iter() {
-        // 非注释
-        // 添加
-        if !line.source.trim_start().starts_with('#') {
+        if line.source.starts_with('#') {
+            /* do nothing */
+        } else if let Some(x) = line.source.strip_prefix("import ") {
+            unimplemented!();
+        } else {
             output.push(line);
         }
     }

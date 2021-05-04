@@ -168,7 +168,6 @@ fn main() {
 
         match file {
             Err(err) => err.to_string(),
-
             Ok(ok) => {
                 for rule in ok.rules.iter() {
                     tool::printer::debug_line(&format!("rule:{}", rule.name));
@@ -177,11 +176,11 @@ fn main() {
                         tool::printer::debug_line(&format!("\timport:{}", deps));
                     }
 
-                    rule.body.execute(&mut Context::new());
+                    rule.body.execute(&mut Context::new()).unwrap();
                 }
 
                 "".to_string()
-            }
+            },
         }
 
         // TODO构建

@@ -12,6 +12,11 @@ use crate::engine::{
     variable::{self, Variable, VariableType},
 };
 use std::sync::Arc;
+use lazy_static::lazy_static;
+
+lazy_static! {
+    static ref EXPR_AST: Arc<str> = Arc::from("# Expr Ast #");
+}
 
 // 抽象语法树
 pub trait Ast {
@@ -263,7 +268,7 @@ impl Ast for ExprAst {
                             reason_token: None,
                             reason_err: None,
                             reason_str: Some(format!(
-                                "The string variable `{}` and `{}` cannot operating except +!",
+                                "The string variable `{}` and `{}` cannot operating except `+` !",
                                 &left.name, &right.name
                             )),
                             help_str: Some(
@@ -281,28 +286,28 @@ impl Ast for ExprAst {
                         // 检查运算
                         ExprOp::Add => {
                             return Ok(Variable {
-                                name: Arc::from("# Expr Ast #"),
+                                name: EXPR_AST.clone(),
                                 typed: VariableType::Number(num + rgt),
                             });
                         }
 
                         ExprOp::Sub => {
                             return Ok(Variable {
-                                name: Arc::from("# Expr Ast #"),
+                                name: EXPR_AST.clone(),
                                 typed: VariableType::Number(num - rgt),
                             });
                         }
 
                         ExprOp::Mul => {
                             return Ok(Variable {
-                                name: Arc::from("# Expr Ast #"),
+                                name: EXPR_AST.clone(),
                                 typed: VariableType::Number(num * rgt),
                             });
                         }
 
                         ExprOp::Div => {
                             return Ok(Variable {
-                                name: Arc::from("# Expr Ast #"),
+                                name: EXPR_AST.clone(),
                                 typed: VariableType::Number(num / rgt),
                             });
                         }

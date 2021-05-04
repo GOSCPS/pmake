@@ -7,6 +7,11 @@
 //=========================================================
 
 use std::sync::Arc;
+use lazy_static::lazy_static;
+
+lazy_static! {
+    static ref TEMPORARY_NONE_NAME: Arc<str> = Arc::from("# TemporaryValue - NONE #");
+}
 
 // 变量类型
 #[derive(Debug, Clone, std::cmp::PartialEq)]
@@ -37,7 +42,7 @@ impl Variable {
     pub fn none_value() -> Variable {
         Variable {
             typed: VariableType::None,
-            name: Arc::from("# TemporaryValue - NONE#"),
+            name: TEMPORARY_NONE_NAME.clone(),
         }
     }
 }
