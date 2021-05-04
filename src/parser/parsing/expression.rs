@@ -21,7 +21,6 @@ use crate::parser::parsing::utility::TokenStream;
 use std::convert::TryFrom;
 use std::{convert, sync::Arc};
 
-
 // 表达式解析从这里开始
 // + -
 fn parse_expression_floor(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseError> {
@@ -219,22 +218,21 @@ fn parse_expression_top(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseE
                     ));
                 }
 
-                
-                    match parse_expression_floor(tokens) {
-                        Err(err) => return Err(err),
+                match parse_expression_floor(tokens) {
+                    Err(err) => return Err(err),
 
-                        Ok(ok) => args.push(ok),
-                    }
+                    Ok(ok) => args.push(ok),
+                }
 
-                    // , 继续
-                    if tokens.get_current().typed == TokenType::Comma {
-                        tokens.next();
-                    }
-                    // ) 结束
-                    else if tokens.get_current().typed == TokenType::ParenthesesEnd{
-                        tokens.next();
-                        break;
-                    }
+                // , 继续
+                if tokens.get_current().typed == TokenType::Comma {
+                    tokens.next();
+                }
+                // ) 结束
+                else if tokens.get_current().typed == TokenType::ParenthesesEnd {
+                    tokens.next();
+                    break;
+                }
             }
 
             return Ok(Box::new(CallAst {
@@ -298,24 +296,21 @@ pub fn parse_expression(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseE
     let mut exprs: Vec<Token> = Vec::new();
 
     loop {
-        let i: String = if let TokenType::Identifier(ide) = &tokens.get_current().typed{
+        let i: String = if let TokenType::Identifier(ide) = &tokens.get_current().typed {
             ide.to_string()
-        }
-        else{
+        } else {
             String::new()
         };
 
-        let n: isize = if let TokenType::Number(num) = tokens.get_current().typed{
+        let n: isize = if let TokenType::Number(num) = tokens.get_current().typed {
             num
-        }
-        else{
+        } else {
             0_isize
         };
 
-        let s: String = if let TokenType::String(strs) = &tokens.get_current().typed{
+        let s: String = if let TokenType::String(strs) = &tokens.get_current().typed {
             strs.to_string()
-        }
-        else{
+        } else {
             String::new()
         };
 

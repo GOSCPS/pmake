@@ -161,10 +161,7 @@ fn main() {
     let mut build_success = true;
 
     // 添加标准库
-    crate::engine::context::GLOBAL_FUNCTION.lock().unwrap().insert(
-        "print".to_string(),
-        Mutex::new(Box::new(standard::print::Print {})),
-    );
+    crate::standard::register_standard_lib();
 
     // 构建
     // 同时捕获panic

@@ -310,9 +310,15 @@ pub struct CallAst {
 
 impl Ast for CallAst {
     fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
-        match super::super::context::GLOBAL_FUNCTION.lock().unwrap().get(&self.name) {
+        let lock = super::super::context::GLOBAL_FUNCTION.lock().unwrap();
+
+        match lock.get(&self.name) {
             Some(some) => {
                 let mut arg_value: Vec<Variable> = Vec::new();
+
+                let func = *some;
+
+                drop(lock);
 
                 // 检索参数
                 for arg in self.args.iter() {
@@ -323,7 +329,7 @@ impl Ast for CallAst {
                     }
                 }
 
-                return (*some).lock().unwrap().execute(&arg_value, context);
+                return func(arg_value, context);
             }
 
             None => {

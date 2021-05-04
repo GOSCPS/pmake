@@ -1,5 +1,3 @@
-use crate::engine::{function::Function, variable::Variable};
-
 //=========================================================
 // 这个文件来自 GOSCPS(https://github.com/GOSCPS)
 // 使用 GOSCPS 许可证
@@ -8,15 +6,12 @@ use crate::engine::{function::Function, variable::Variable};
 // Copyright (c) 2020-2021 GOSCPS 保留所有权利.
 //=========================================================
 
-use crate::engine::{context::Context, error, variable};
+use crate::engine::{context::Context, error, variable,variable::Variable};
+use std::sync::Arc;
 
-pub struct Print {}
-
-impl Function for Print {
-    fn execute(
-        &mut self,
-        args: &Vec<variable::Variable>,
-        context: &mut Context,
+pub fn print(
+        args: Vec<variable::Variable>,
+        context:&mut Context,
     ) -> Result<variable::Variable, error::RuntimeError> {
         for arg in args {
             match &arg.typed {
@@ -29,7 +24,7 @@ impl Function for Print {
                 }
 
                 variable::VariableType::None => {
-                    print!("{}", "None")
+                    print!("{}", "`NONE`")
                 }
 
                 variable::VariableType::Str(str) => {
@@ -37,11 +32,21 @@ impl Function for Print {
                 }
 
                 _ => {
-                    print!("{}","`UNKNOWN TYPE`")
+                    print!("{}", "`UNKNOWN TYPE`")
                 }
             }
         }
 
         return Ok(Variable::none_value());
     }
-}
+
+    pub fn println(
+        args: Vec<variable::Variable>,
+        context: &mut Context,
+    ) -> Result<variable::Variable, error::RuntimeError> {
+        
+        print(args,context);
+        print!("\n");
+
+        return Ok(Variable::none_value());
+    }

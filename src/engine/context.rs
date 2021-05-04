@@ -32,6 +32,6 @@ lazy_static! {
     : Context = Context::new();
 
     pub static ref GLOBAL_FUNCTION
-    : Mutex<HashMap<String,Mutex<Box<dyn Function>>>>
+    : Mutex<HashMap<String,Function>>
     = Mutex::from(HashMap::new());
 }

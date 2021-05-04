@@ -9,10 +9,7 @@
 use crate::engine::{context::Context, error, variable};
 
 // 函数
-pub trait Function: Send + Sync {
-    fn execute(
-        &mut self,
-        args: &Vec<variable::Variable>,
-        context: &mut Context,
-    ) -> Result<variable::Variable, error::RuntimeError>;
-}
+pub type Function = fn(
+    args: Vec<variable::Variable>,
+    context: &mut Context,
+) -> Result<variable::Variable, error::RuntimeError>;

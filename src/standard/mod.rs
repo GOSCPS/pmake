@@ -7,3 +7,10 @@
 //=========================================================
 
 pub mod print;
+
+
+pub fn register_standard_lib(){
+
+    crate::engine::context::GLOBAL_FUNCTION.lock().unwrap().insert("print".to_string(),print::print);
+    crate::engine::context::GLOBAL_FUNCTION.lock().unwrap().insert("println".to_string(),print::println);
+}
