@@ -258,6 +258,10 @@ pub fn parse_token(lines: &[LineInfo]) -> Result<Vec<Token>, ParseError> {
                 let started_ptr = ptr;
                 let digit = parse_token_number(&chars, &mut ptr);
 
+                // 我们已经移动到string末尾了呢
+                // 移动回去
+                ptr -= 1;
+
                 // 处理错误
                 match digit {
                     Err(err) => {

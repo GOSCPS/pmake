@@ -60,6 +60,7 @@ fn parse_expression_floor(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, Pars
             }
 
             // 获取right
+            tokens.next();
             match parse_expression_second(tokens) {
                 Err(err) => return Err(err),
                 Ok(ok) => expr.right = ok,
@@ -80,6 +81,7 @@ fn parse_expression_floor(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, Pars
             }
 
             // 获取right
+            tokens.next();
             match parse_expression_second(tokens) {
                 Err(err) => return Err(err),
                 Ok(ok) => expr.right = ok,
@@ -128,6 +130,7 @@ fn parse_expression_second(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, Par
             }
 
             // 获取right
+            tokens.next();
             match parse_expression_third(tokens) {
                 Err(err) => return Err(err),
                 Ok(ok) => expr.right = ok,
@@ -148,6 +151,7 @@ fn parse_expression_second(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, Par
             }
 
             // 获取right
+            tokens.next();
             match parse_expression_third(tokens) {
                 Err(err) => return Err(err),
                 Ok(ok) => expr.right = ok,

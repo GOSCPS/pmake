@@ -21,19 +21,23 @@ impl Function for Print {
         for arg in args {
             match &arg.typed {
                 variable::VariableType::Boolean(bol) => {
-                    println!("{}", bol)
+                    print!("{}", bol)
                 }
 
                 variable::VariableType::Number(num) => {
-                    println!("{}", num)
+                    print!("{}", num)
                 }
 
                 variable::VariableType::None => {
-                    println!("{}", "None")
+                    print!("{}", "None")
                 }
 
                 variable::VariableType::Str(str) => {
-                    println!("{}", str.clone())
+                    print!("{}", str.clone())
+                }
+
+                _ => {
+                    print!("{}","`UNKNOWN TYPE`")
                 }
             }
         }

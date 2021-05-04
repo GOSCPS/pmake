@@ -28,7 +28,11 @@ pub struct LineInfo {
 // 解析源文件
 pub fn pre_parse(file_name: &String) -> Result<Vec<LineInfo>, String> {
     // 读取文件
-    let context = fs::read_to_string(file_name).unwrap_or_else(|_| panic!("`{}`\n", file_name));
+    let mut context = fs::read_to_string(file_name).unwrap_or_else(|_| panic!("`{}`\n", file_name));
+
+    // 插入一个换行符
+    // 防止最后一行因为无\n而无法被构建
+    context.push('\n');
 
     // 行号
     let mut line_number: usize = 1_usize;
