@@ -167,7 +167,17 @@ fn main() {
         match file {
             Err(err) => err.to_string(),
 
-            Ok(ok) => "".to_string(),
+            Ok(ok) => {
+                for rule in ok.rules.iter(){
+                    tool::printer::debug_line(&format!("rule:{}",rule.name));
+
+                    for deps in rule.import.iter(){
+                        tool::printer::debug_line(&format!("\tdeps:{}",deps));
+                    }
+                }
+                
+                "".to_string()
+            }
         }
 
         // TODO构建
@@ -182,10 +192,10 @@ fn main() {
 
     let hours: u64 = elapsed.as_secs() / 3600;
     let minutes: u64 = (elapsed.as_secs() % 3600) / 60;
-    let secs: u64 = elapsed.as_secs();
-    let millis: u32 = elapsed.subsec_millis();
+    let secs: u64 = (elapsed.as_secs() % 3600) % 60;
+    let none_secs: u32 = elapsed.subsec_nanos();
 
-    println!("use {}:{}:{} {}ms", hours, minutes, secs, millis);
+    println!("use {}:{}:{} {}ns", hours, minutes, secs, none_secs);
 
     // 检查结果
     if build_success {
