@@ -78,10 +78,11 @@ pub fn pre_parse(file_name: &str) -> Result<Vec<LineInfo>, String> {
     for line in total_lines.into_iter() {
         if line.source.starts_with('#') {
             /* do nothing */
-        } else if let Some(x) = line.source.strip_prefix("import ") {
+        } else if let Some(path) = line.source.strip_prefix("import ") {
+            // TODO: Abstract path
             if !IMPORTED_FILES.lock().unwrap().contains(x) {
-                output.append(&mut pre_parse(x)?);
                 IMPORTED_FILES.lock().unwrap().insert(x.to_owned());
+                output.append(&mut pre_parse(path)?);
             }
         } else {
             output.push(line);
