@@ -22,6 +22,7 @@ pub struct NopAst {}
 
 impl Ast for NopAst {
     fn execute(&self, _context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
+        std::hint::spin_loop();
         Ok(Variable {
             name: Arc::from("# Temporary value from NopAST #".to_string()),
             typed: variable::VariableType::None,
