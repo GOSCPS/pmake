@@ -21,6 +21,8 @@ mod tool;
 
 use tool::printer;
 
+use crate::engine::context::Context;
+
 // 全局变量定义
 lazy_static! {
     // 全局变量表
@@ -164,21 +166,22 @@ fn main() {
         let file = parser::control::parse_file(&BUILD_FILE_NAME.lock().unwrap());
 
         match file {
-            Err(err) => {err.to_string()},
+            Err(err) => err.to_string(),
 
             Ok(ok) => {
-                for rule in ok.rules.iter(){
-                    tool::printer::debug_line(&format!("rule:{}",rule.name));
+                for rule in ok.rules.into_iter() {
+                    tool::printer::debug_line(&format!("rule:{}", rule.name));
 
-                    for deps in rule.import.iter(){
-                        tool::printer::debug_line(&format!("\timport:{}",deps));
+                    for deps in rule.import.iter() {
+                        tool::printer::debug_line(&format!("\timport:{}", deps));
                     }
+
+                    rule.body.execute(&mut Context::new());
                 }
-                
+
                 "".to_string()
             }
         }
-
 
         // TODO构建
     })
@@ -193,9 +196,9 @@ fn main() {
     let hours: u64 = elapsed.as_secs() / 3600;
     let minutes: u64 = (elapsed.as_secs() % 3600) / 60;
     let secs: u64 = (elapsed.as_secs() % 3600) % 60;
-    let none_secs: u32 = elapsed.subsec_nanos();
+    let nanos: u32 = elapsed.subsec_nanos();
 
-    println!("use {}:{}:{} {}ns", hours, minutes, secs, none_secs);
+    println!("use {}:{}:{} {}ns", hours, minutes, secs, nanos);
 
     // 检查结果
     if build_success {

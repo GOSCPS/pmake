@@ -6,12 +6,13 @@
 // Copyright (c) 2020-2021 GOSCPS 保留所有权利.
 //=========================================================
 
-use crate::engine::{error, variable};
+use crate::engine::{context::Context, error, variable};
 
 // 函数
-pub trait Function {
+pub trait Function : Send + Sync{
     fn execute(
         &mut self,
         args: &Vec<variable::Variable>,
+        context : &mut Context
     ) -> Result<variable::Variable, error::RuntimeError>;
 }

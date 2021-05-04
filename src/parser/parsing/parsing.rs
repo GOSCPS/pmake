@@ -6,6 +6,8 @@
 // Copyright (c) 2020-2021 GOSCPS 保留所有权利.
 //=========================================================
 
+use super::expression::parse_expression;
+use crate::engine::ast::ast::AssignmentAst;
 use crate::engine::ast::ast::BlockAst;
 use crate::engine::ast::ast::{Ast, NopAst};
 use crate::engine::rule::Rule;

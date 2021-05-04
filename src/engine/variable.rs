@@ -9,7 +9,7 @@
 use std::sync::Arc;
 
 // 变量类型
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, std::cmp::PartialEq)]
 pub enum VariableType {
     None,
     Str(String),

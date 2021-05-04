@@ -6,7 +6,7 @@
 // Copyright (c) 2020-2021 GOSCPS 保留所有权利.
 //=========================================================
 
-use crate::parser::{error::ParseError, parse::Token,parse::TokenType};
+use crate::parser::{error::ParseError, parse::Token, parse::TokenType};
 use std::sync::Arc;
 
 // Token流

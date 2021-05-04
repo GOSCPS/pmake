@@ -36,11 +36,20 @@ pub enum TokenType {
     // :
     Colon,
 
+    // ,
+    Comma,
+
     // =
     EqualSign,
 
     // ;
     Semicolon,
+
+    // + - * /
+    Add,
+    Sub,
+    Mul,
+    Div,
 }
 
 // Token
@@ -393,6 +402,41 @@ pub fn parse_token(lines: &[LineInfo]) -> Result<Vec<Token>, ParseError> {
             } else if chars[ptr] == ';' {
                 current = Token {
                     typed: TokenType::Semicolon,
+                    line_number: line.line_number,
+                    offset: ptr,
+                    file: source_file.clone(),
+                }
+            } else if chars[ptr] == '+' {
+                current = Token {
+                    typed: TokenType::Add,
+                    line_number: line.line_number,
+                    offset: ptr,
+                    file: source_file.clone(),
+                }
+            } else if chars[ptr] == '-' {
+                current = Token {
+                    typed: TokenType::Sub,
+                    line_number: line.line_number,
+                    offset: ptr,
+                    file: source_file.clone(),
+                }
+            } else if chars[ptr] == '*' {
+                current = Token {
+                    typed: TokenType::Mul,
+                    line_number: line.line_number,
+                    offset: ptr,
+                    file: source_file.clone(),
+                }
+            } else if chars[ptr] == '/' {
+                current = Token {
+                    typed: TokenType::Div,
+                    line_number: line.line_number,
+                    offset: ptr,
+                    file: source_file.clone(),
+                }
+            } else if chars[ptr] == ',' {
+                current = Token {
+                    typed: TokenType::Comma,
                     line_number: line.line_number,
                     offset: ptr,
                     file: source_file.clone(),

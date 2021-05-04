@@ -6,10 +6,11 @@
 // Copyright (c) 2020-2021 GOSCPS 保留所有权利.
 //=========================================================
 
-use crate::engine::variable::Variable;
+use crate::engine::{function::Function, variable::Variable};
 use lazy_static::lazy_static;
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 use std::sync::RwLock;
+use std::sync::Mutex;
 
 // 上下文
 pub struct Context {
@@ -29,4 +30,8 @@ lazy_static! {
     // 全局上下文
     pub static ref GLOBAL_CONTEXT
     : Context = Context::new();
+
+    pub static ref GLOBAL_FUNCTION
+    : Arc<HashMap<String,Mutex<Box<dyn Function>>>>
+    = Arc::from(HashMap::new());
 }
