@@ -50,7 +50,7 @@ pub fn ok_line(msg: &str) {
     println!(
         "{} {}:{}",
         "pmake".bold(),
-        "ok   ".bright_green().bold(),
+        "okay ".bright_green().bold(),
         &msg
     );
 }

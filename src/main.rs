@@ -172,7 +172,7 @@ fn main() {
                     tool::printer::debug_line(&format!("rule:{}",rule.name));
 
                     for deps in rule.import.iter(){
-                        tool::printer::debug_line(&format!("\tdeps:{}",deps));
+                        tool::printer::debug_line(&format!("\timport:{}",deps));
                     }
                 }
                 
