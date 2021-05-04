@@ -16,7 +16,7 @@ use std::sync::Arc;
 // 抽象语法树
 pub trait Ast {
     fn execute(
-        self: Box<Self>,
+        &self,
         context: &mut Context,
     ) -> Result<variable::Variable, error::RuntimeError>;
 }
@@ -25,7 +25,7 @@ pub struct NopAst {}
 
 impl Ast for NopAst {
     fn execute(
-        self: Box<Self>,
+        &self,
         context: &mut Context,
     ) -> Result<variable::Variable, error::RuntimeError> {
         Ok(Variable {
@@ -43,7 +43,7 @@ pub struct AssignmentAst {
 
 impl Ast for AssignmentAst {
     fn execute(
-        self: Box<Self>,
+        &self,
         context: &mut Context,
     ) -> Result<variable::Variable, error::RuntimeError> {
         match self.value.execute(context) {
@@ -54,7 +54,7 @@ impl Ast for AssignmentAst {
                         .variable_table
                         .write()
                         .unwrap()
-                        .insert(self.name, ok);
+                        .insert(self.name.clone(), ok);
                 }
                 // 本地变量
                 else {
@@ -62,7 +62,7 @@ impl Ast for AssignmentAst {
                         .variable_table
                         .write()
                         .unwrap()
-                        .insert(self.name, ok);
+                        .insert(self.name.clone(), ok);
                 }
                 Ok(Variable::none_value())
             }
@@ -78,10 +78,10 @@ pub struct ImmediateAst {
 
 impl Ast for ImmediateAst {
     fn execute(
-        self: Box<Self>,
+        &self,
         context: &mut Context,
     ) -> Result<variable::Variable, error::RuntimeError> {
-        return Ok(self.immediate);
+        return Ok(self.immediate.clone());
     }
 }
 
@@ -91,12 +91,12 @@ pub struct BlockAst {
 
 impl Ast for BlockAst {
     fn execute(
-        self: Box<Self>,
+        &self,
         context: &mut Context,
     ) -> Result<variable::Variable, error::RuntimeError> {
         let mut var: Variable = Variable::none_value();
 
-        for ast in self.blocks {
+        for ast in &self.blocks {
             match ast.execute(context) {
                 Ok(output) => var = output,
 
@@ -115,7 +115,7 @@ pub struct GetVariableAst {
 
 impl Ast for GetVariableAst {
     fn execute(
-        self: Box<Self>,
+        &self,
         context: &mut Context,
     ) -> Result<variable::Variable, error::RuntimeError> {
         // 从本地变量获取
@@ -181,7 +181,7 @@ pub struct ExprAst {
 
 impl Ast for ExprAst {
     fn execute(
-        self: Box<Self>,
+        &self,
         context: &mut Context,
     ) -> Result<variable::Variable, error::RuntimeError> {
         // 特殊的操作
@@ -332,7 +332,7 @@ pub struct CallAst{
 impl Ast for CallAst{
 
     fn execute(
-        self: Box<Self>,
+        &self,
         context: &mut Context,
     ) -> Result<variable::Variable, error::RuntimeError>{
 
@@ -342,8 +342,8 @@ impl Ast for CallAst{
                 let mut arg_value : Vec<Variable> = Vec::new();
 
                 // 检索参数
-                for arg in self.args.into_iter(){
-                    match arg.execute(context){
+                for arg in self.args.iter(){
+                    match (**arg).execute(context){
                         Err(err) => return Err(err),
 
                         Ok(ok) => arg_value.push(ok)

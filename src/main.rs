@@ -18,6 +18,7 @@ use std::time::Instant;
 mod engine;
 mod parser;
 mod tool;
+mod standard;
 
 use tool::printer;
 
@@ -169,7 +170,7 @@ fn main() {
             Err(err) => err.to_string(),
 
             Ok(ok) => {
-                for rule in ok.rules.into_iter() {
+                for rule in ok.rules.iter() {
                     tool::printer::debug_line(&format!("rule:{}", rule.name));
 
                     for deps in rule.import.iter() {
