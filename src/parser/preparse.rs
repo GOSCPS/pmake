@@ -6,12 +6,17 @@
 // Copyright (c) 2020-2021 GOSCPS 保留所有权利.
 //=========================================================
 
-use std::collections::HashMap;
+use std::collections::HashSet;
 use std::fs;
 use std::{
     path::PathBuf,
     sync::{Arc, Mutex},
 };
+use lazy_static::lazy_static;
+
+lazy_static! {
+    static ref IMPORTED_FILES: Mutex<HashSet<String>> = Mutex::new(HashSet::new());
+}
 
 // 行信息
 pub struct LineInfo {
@@ -26,12 +31,12 @@ pub struct LineInfo {
 }
 
 // 解析源文件
-pub fn pre_parse(file_name: &String) -> Result<Vec<LineInfo>, String> {
+pub fn pre_parse(file_name: &str) -> Result<Vec<LineInfo>, String> {
     // 读取文件
-    let context = fs::read_to_string(file_name).unwrap_or_else(|_| panic!("`{}`\n", file_name));
+    let context = fs::read_to_string(file_name).unwrap_or_else(|x| panic!("error reading file `{}`: {:?}", file_name, x));
 
     // 行号
-    let mut line_number: usize = 1_usize;
+    let mut line_number: usize = 1;
 
     // 总行数
     let mut total_lines: Vec<LineInfo> = Vec::new();
@@ -74,7 +79,10 @@ pub fn pre_parse(file_name: &String) -> Result<Vec<LineInfo>, String> {
         if line.source.starts_with('#') {
             /* do nothing */
         } else if let Some(x) = line.source.strip_prefix("import ") {
-            unimplemented!();
+            if !IMPORTED_FILES.lock().unwrap().contains(x) {
+                output.append(&mut pre_parse(x)?);
+                IMPORTED_FILES.lock().unwrap().insert(x.to_owned());
+            }
         } else {
             output.push(line);
         }
