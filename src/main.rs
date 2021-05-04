@@ -160,12 +160,11 @@ fn main() {
 
     // 构建
     // 同时捕获panic
-
     if panic::catch_unwind(|| {
         let file = parser::control::parse_file(&BUILD_FILE_NAME.lock().unwrap());
 
         match file {
-            Err(err) => err.to_string(),
+            Err(err) => {err.to_string()},
 
             Ok(ok) => {
                 for rule in ok.rules.iter(){
@@ -179,6 +178,7 @@ fn main() {
                 "".to_string()
             }
         }
+
 
         // TODO构建
     })
@@ -201,7 +201,7 @@ fn main() {
     if build_success {
         printer::ok_line("- finished -");
     } else {
-        println!("{}", "- failed -".bright_red().bold());
+        printer::error_line("- failed -");
     }
 
     process::exit(0);
