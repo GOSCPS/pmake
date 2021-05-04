@@ -9,7 +9,7 @@
 use std::sync::Arc;
 
 // 变量类型
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum VariableType {
     None,
     Str(String),
@@ -18,19 +18,26 @@ pub enum VariableType {
 }
 
 // 变量
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Variable {
     pub typed: VariableType,
     pub name: Arc<str>,
 }
 
 impl Variable {
-    fn to_string(&self) -> String {
+    pub fn to_string(&self) -> String {
         return match &self.typed {
             VariableType::None => String::from(" "),
             VariableType::Str(value) => value.to_string(),
             VariableType::Number(num) => num.to_string(),
             VariableType::Boolean(boolean) => boolean.to_string(),
         };
+    }
+
+    pub fn none_value() -> Variable {
+        Variable {
+            typed: VariableType::None,
+            name: Arc::from("# TemporaryValue - NONE#"),
+        }
     }
 }

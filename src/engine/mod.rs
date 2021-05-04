@@ -7,6 +7,7 @@
 //=========================================================
 
 pub mod ast;
+pub mod context;
 pub mod error;
 pub mod function;
 pub mod pfile;

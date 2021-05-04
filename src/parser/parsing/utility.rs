@@ -6,7 +6,8 @@
 // Copyright (c) 2020-2021 GOSCPS 保留所有权利.
 //=========================================================
 
-use crate::parser::parse::Token;
+use crate::parser::{error::ParseError, parse::Token,parse::TokenType};
+use std::sync::Arc;
 
 // Token流
 pub struct TokenStream {
@@ -15,19 +16,15 @@ pub struct TokenStream {
 }
 
 impl TokenStream {
-    pub fn get_current(&mut self) -> &Token {
+    pub fn get_current(&self) -> &Token {
         &self.tokens[self.ptr]
     }
 
-    pub fn is_last(&mut self) -> bool {
-        if self.ptr >= self.tokens.len() {
-            true
-        } else {
-            false
-        }
+    pub fn is_end(&self) -> bool {
+        self.ptr >= self.tokens.len()
     }
 
-    pub fn get_last(&mut self) -> &Token {
+    pub fn get_last(&self) -> &Token {
         &self.tokens[self.tokens.len() - 1]
     }
 
@@ -36,6 +33,49 @@ impl TokenStream {
     }
 
     pub fn back(&mut self) {
-        self.ptr += 1
+        self.ptr -= 1
+    }
+
+    pub fn skip_end_line(&mut self) {
+        // 跳过EndLine
+        loop {
+            if self.is_end() {
+                break;
+            } else if let TokenType::EndLine = self.get_current().typed {
+                self.next();
+            } else {
+                break;
+            }
+        }
+    }
+
+    pub fn generate_error(
+        &self,
+        reason_str: Option<String>,
+        help_str: Option<String>,
+    ) -> ParseError {
+        if self.is_end() {
+            ParseError {
+                source: format!("{:?}", self.get_last()),
+                line_number: self.get_last().line_number,
+                file: Arc::new(std::fs::canonicalize(&*self.get_last().file).unwrap()),
+                offset: self.get_last().offset,
+                length: 0,
+                reason_str,
+                reason_err: None,
+                help_str,
+            }
+        } else {
+            ParseError {
+                source: format!("{:?}", self.get_current()),
+                line_number: self.get_current().line_number,
+                file: Arc::new(std::fs::canonicalize(&*self.get_current().file).unwrap()),
+                offset: self.get_current().offset,
+                length: 0,
+                reason_str,
+                reason_err: None,
+                help_str,
+            }
+        }
     }
 }

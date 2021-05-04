@@ -161,7 +161,19 @@ fn main() {
     // 构建
     // 同时捕获panic
 
-    if panic::catch_unwind(|| {}).is_err() {
+    if panic::catch_unwind(|| {
+        let file = parser::control::parse_file(&BUILD_FILE_NAME.lock().unwrap());
+
+        match file {
+            Err(err) => err.to_string(),
+
+            Ok(ok) => "".to_string(),
+        }
+
+        // TODO构建
+    })
+    .is_err()
+    {
         build_success = false;
     }
 

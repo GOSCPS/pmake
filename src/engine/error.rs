@@ -6,8 +6,8 @@
 // Copyright (c) 2020-2021 GOSCPS 保留所有权利.
 //=========================================================
 
-use crate::parser::parse::Token;
 use crate::tool;
+use crate::{engine::ast::ast::Ast, parser::parse::Token};
 use std::{error::Error, sync::Arc};
 
 //解析错误

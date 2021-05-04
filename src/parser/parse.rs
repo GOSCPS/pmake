@@ -11,7 +11,7 @@ use std::{path::PathBuf, sync::Arc};
 
 use super::{error::ParseError, preparse::LineInfo};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, std::cmp::PartialEq)]
 // Token类型
 pub enum TokenType {
     String(String),
@@ -21,6 +21,9 @@ pub enum TokenType {
 
     // 关键字
     KeywordTarget,
+    KeywordRule,
+    KeywordSet,
+    KeywordSetGlobal,
 
     // ( )
     Parentheses,
@@ -35,6 +38,9 @@ pub enum TokenType {
 
     // =
     EqualSign,
+
+    // ;
+    Semicolon,
 }
 
 // Token
@@ -323,6 +329,12 @@ pub fn parse_token(lines: &[LineInfo]) -> Result<Vec<Token>, ParseError> {
 
                 if ident == "target" {
                     typed = TokenType::KeywordTarget;
+                } else if ident == "rule" {
+                    typed = TokenType::KeywordRule;
+                } else if ident == "set" {
+                    typed = TokenType::KeywordSet
+                } else if ident == "setGlobal" {
+                    typed = TokenType::KeywordSetGlobal
                 } else {
                     typed = TokenType::Identifier(ident);
                 }
@@ -374,6 +386,13 @@ pub fn parse_token(lines: &[LineInfo]) -> Result<Vec<Token>, ParseError> {
             } else if chars[ptr] == '=' {
                 current = Token {
                     typed: TokenType::EqualSign,
+                    line_number: line.line_number,
+                    offset: ptr,
+                    file: source_file.clone(),
+                }
+            } else if chars[ptr] == ';' {
+                current = Token {
+                    typed: TokenType::Semicolon,
                     line_number: line.line_number,
                     offset: ptr,
                     file: source_file.clone(),

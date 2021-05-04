@@ -68,12 +68,12 @@ pub fn pre_parse(file_name: &String) -> Result<Vec<LineInfo>, String> {
     }
 
     // 去除注释
-    let mut output:Vec<LineInfo> = Vec::new();
+    let mut output: Vec<LineInfo> = Vec::new();
 
-    for line in total_lines.into_iter(){
+    for line in total_lines.into_iter() {
         // 非注释
         // 添加
-        if !line.source.trim_start().starts_with('#'){
+        if !line.source.trim_start().starts_with('#') {
             output.push(line);
         }
     }

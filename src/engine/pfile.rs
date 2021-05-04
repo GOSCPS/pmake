@@ -6,8 +6,8 @@
 // Copyright (c) 2020-2021 GOSCPS 保留所有权利.
 //=========================================================
 
-use crate::engine::rule::Rule;
 use crate::engine::target::Target;
+use crate::engine::{ast::ast::Ast, rule::Rule};
 use std::path::PathBuf;
 
 //文件
@@ -15,4 +15,5 @@ pub struct PFile {
     pub file: PathBuf,
     pub rules: Vec<Rule>,
     pub targets: Vec<Target>,
+    pub global_statements: Vec<Box<Ast>>,
 }
