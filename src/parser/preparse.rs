@@ -7,10 +7,7 @@
 //=========================================================
 
 use std::fs;
-use std::{
-    path::PathBuf,
-    sync::{Arc},
-};
+use std::{path::PathBuf, sync::Arc};
 
 // 行信息
 pub struct LineInfo {
@@ -25,9 +22,10 @@ pub struct LineInfo {
 }
 
 // 解析源文件
-pub fn pre_parse(file_name: &String) -> Result<Vec<LineInfo>, String> {
+pub fn pre_parse(file_name: &str) -> Result<Vec<LineInfo>, String> {
     // 读取文件
-    let mut context = fs::read_to_string(file_name).unwrap_or_else(|_| panic!("`{}`\n", file_name));
+    let mut context = fs::read_to_string(file_name)
+        .map_err(|x| format!("error reading file `{}`: {:?}", file_name, x))?;
 
     // 插入一个换行符
     // 防止最后一行因为无\n而无法被构建

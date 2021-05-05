@@ -234,7 +234,7 @@ fn parse_expression_top(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseE
             }
 
             return Ok(Box::new(CallAst {
-                name: ident.clone(),
+                name: ident,
                 args,
             }));
         }
@@ -242,7 +242,7 @@ fn parse_expression_top(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseE
         else {
 
             return Ok(Box::new(GetVariableAst {
-                name: ident.clone(),
+                name: ident,
             }));
         }
     }
