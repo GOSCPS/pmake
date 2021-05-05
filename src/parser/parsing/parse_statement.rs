@@ -18,7 +18,7 @@ pub fn parse_statement_assignment(tokens: &mut TokenStream)
     }
 
     // 检查赋值是否为全局变量
-    let global;
+    let global:bool;
 
     if tokens.get_current().typed == TokenType::KeywordSet {
         global = false;
@@ -38,7 +38,7 @@ pub fn parse_statement_assignment(tokens: &mut TokenStream)
     tokens.next();
     let name:String;
 
-// miss 变量名称
+    // miss 变量名称
     if tokens.is_end(){
         return Err(tokens.generate_error(
             Some("Miss variable name!".to_string()),

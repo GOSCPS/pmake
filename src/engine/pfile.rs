@@ -15,5 +15,5 @@ pub struct PFile {
     pub file: PathBuf,
     pub rules: Vec<Rule>,
     pub targets: Vec<Target>,
-    pub global_statements: Vec<Box<dyn Ast>>,
+    pub global_statements: Box<dyn Ast>,
 }

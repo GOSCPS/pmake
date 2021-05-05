@@ -166,20 +166,18 @@ fn main() {
     // 同时捕获panic
     if panic::catch_unwind(|| {
         let file = parser::control::parse_file(&BUILD_FILE_NAME.lock().unwrap());
+        printer::ok_line("parse file finished");
 
         match file {
             Err(err) => err.to_string(),
 
             Ok(ok) => {
-                for rule in ok.rules.iter() {
-                    tool::printer::debug_line(&format!("rule:{}", rule.name));
 
-                    for deps in rule.import.iter() {
-                        tool::printer::debug_line(&format!("\timport:{}", deps));
+                    match ok.global_statements.execute(&mut Context::new()){
+                        Err(err) => {err.to_string();()},
+
+                        Ok(ok) => ()
                     }
-
-                    rule.body.execute(&mut Context::new()).unwrap();
-                }
 
                 "".to_string()
             }
@@ -200,14 +198,14 @@ fn main() {
     let secs: u64 = (elapsed.as_secs() % 3600) % 60;
     let nanos: u32 = elapsed.subsec_nanos();
 
-    println!("use {}:{}:{} {}ns", hours, minutes, secs, nanos);
+    println!("use {}:{}:{} {:09}ns", hours, minutes, secs, nanos);
 
     // 检查结果
     if build_success {
         printer::ok_line("- finished -");
+        process::exit(0);
     } else {
         printer::error_line("- failed -");
+        process::exit(1);
     }
-
-    process::exit(0);
 }

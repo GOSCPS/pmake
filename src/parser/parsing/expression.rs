@@ -240,7 +240,6 @@ fn parse_expression_top(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseE
         }
         // 变量
         else {
-            tokens.back();
 
             return Ok(Box::new(GetVariableAst {
                 name: ident.clone(),
@@ -254,7 +253,7 @@ fn parse_expression_top(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseE
 
         return Ok(Box::new(ImmediateAst {
             immediate: Variable {
-                name: Arc::from("# ImmediateAst #"),
+                name: Arc::from("# ImmediateAst For String #"),
                 typed: VariableType::Str(s),
             },
         }));
@@ -263,7 +262,7 @@ fn parse_expression_top(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseE
 
         return Ok(Box::new(ImmediateAst {
             immediate: Variable {
-                name: Arc::from("# ImmediateAst #"),
+                name: Arc::from("# ImmediateAst For Number #"),
                 typed: VariableType::Number(match i64::try_from(num) {
                     Err(_err) => {
                         return Err(tokens.generate_error(

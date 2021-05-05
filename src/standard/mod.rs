@@ -11,7 +11,7 @@ pub mod print;
 #[inline(always)]
 pub fn register_standard_lib() {
     let lock = crate::engine::context::GLOBAL_FUNCTION.lock();
-    let lock = lock.unwrap();
+    let mut lock = lock.unwrap();
     lock.insert("print".to_string(),print::print);
     lock.insert("println".to_string(),print::println);
 }

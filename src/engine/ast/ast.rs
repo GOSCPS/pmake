@@ -197,7 +197,7 @@ impl Ast for ExprAst {
         let right = right_.unwrap();
 
         // 检查类型
-        if left.typed != right.typed {
+        /*if left.typed != right.typed {
             return Err(RuntimeError {
                 reason_token: None,
                 reason_err: None,
@@ -207,7 +207,7 @@ impl Ast for ExprAst {
                 )),
                 help_str: Some("Check the variable name and type!".to_string()),
             });
-        }
+        }*/
 
         // None不进行计算
         if left.typed == VariableType::None {
@@ -230,11 +230,19 @@ impl Ast for ExprAst {
                     ExprOp::Add => {
                         if let VariableType::Str(rgt) = right.typed {
                             return Ok(Variable {
-                                name: Arc::from("# Expr Ast #"),
+                                name: Arc::from("# Expr Ast For Append String#"),
                                 typed: VariableType::Str(str + &*rgt),
                             });
                         } else {
-                            unreachable!("type of LFT not equals to RGH!");
+                            return Err(RuntimeError {
+                                reason_token: None,
+                                reason_err: None,
+                                reason_str: Some(format!(
+                                    "The type of variable `{}` and `{}` are not some!",
+                                    &left.name, &right.name
+                                )),
+                                help_str: Some("Check the variable name and type!".to_string()),
+                            });
                         }
                     }
 
@@ -292,7 +300,15 @@ impl Ast for ExprAst {
                         }
                     }
                 } else {
-                    unreachable!("type of LFT not equals to RGH!");
+                    return Err(RuntimeError {
+                        reason_token: None,
+                        reason_err: None,
+                        reason_str: Some(format!(
+                            "The type of variable `{}` and `{}` are not some!",
+                            &left.name, &right.name
+                        )),
+                        help_str: Some("Check the variable name and type!".to_string()),
+                    });
                 }
             }
 
