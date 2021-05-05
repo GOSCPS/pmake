@@ -8,19 +8,19 @@
 
 use crate::engine::{
     context::Context,
-    error::{self,RuntimeError},
+    error::{self, RuntimeError},
     variable::{self, Variable, VariableType},
 };
 use std::sync::Arc;
 
 // 抽象语法树
-pub trait Ast : Send + Sync{
+pub trait Ast: Send + Sync {
     fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError>;
     fn clone(&self) -> Box<dyn Ast>;
 }
 
-impl Clone for Box<dyn Ast>{
-    fn clone(&self) -> Self{
+impl Clone for Box<dyn Ast> {
+    fn clone(&self) -> Self {
         Ast::clone(&**self)
     }
 }
@@ -36,11 +36,10 @@ impl Ast for NopAst {
             typed: variable::VariableType::None,
         })
     }
-    fn clone(&self) -> Box<dyn Ast>{
-        Box::new(NopAst{})
+    fn clone(&self) -> Box<dyn Ast> {
+        Box::new(NopAst {})
     }
 }
-
 
 #[derive(Clone)]
 pub struct AssignmentAst {
@@ -76,11 +75,11 @@ impl Ast for AssignmentAst {
         }
     }
 
-    fn clone(&self) -> Box<dyn Ast>{
-        Box::new(AssignmentAst{
-            global : self.global,
-            name : self.name.clone(),
-            value : self.value.clone()
+    fn clone(&self) -> Box<dyn Ast> {
+        Box::new(AssignmentAst {
+            global: self.global,
+            name: self.name.clone(),
+            value: self.value.clone(),
         })
     }
 }
@@ -94,9 +93,9 @@ impl Ast for ImmediateAst {
         return Ok(self.immediate.clone());
     }
 
-    fn clone(&self) -> Box<dyn Ast>{
-        Box::new(ImmediateAst{
-            immediate : self.immediate.clone()
+    fn clone(&self) -> Box<dyn Ast> {
+        Box::new(ImmediateAst {
+            immediate: self.immediate.clone(),
         })
     }
 }
@@ -121,13 +120,12 @@ impl Ast for BlockAst {
         return Ok(var);
     }
 
-    fn clone(&self) -> Box<dyn Ast>{
-        Box::new(BlockAst{
-            blocks : self.blocks.clone()
+    fn clone(&self) -> Box<dyn Ast> {
+        Box::new(BlockAst {
+            blocks: self.blocks.clone(),
         })
     }
 }
-
 
 // 获取变量Ast
 #[derive(Clone)]
@@ -179,14 +177,14 @@ impl Ast for GetVariableAst {
         }
     }
 
-    fn clone(&self) -> Box<dyn Ast>{
-        Box::new(GetVariableAst{
-            name : self.name.clone()
+    fn clone(&self) -> Box<dyn Ast> {
+        Box::new(GetVariableAst {
+            name: self.name.clone(),
         })
     }
 }
 
-#[derive(std::cmp::PartialEq,Clone,Copy)]
+#[derive(std::cmp::PartialEq, Clone, Copy)]
 pub enum ExprOp {
     Add,
     Sub,
@@ -361,11 +359,11 @@ impl Ast for ExprAst {
         }
     }
 
-    fn clone(&self) -> Box<dyn Ast>{
-        Box::new(ExprAst{
-            left : self.left.clone(),
-            right : self.right.clone(),
-            op : self.op
+    fn clone(&self) -> Box<dyn Ast> {
+        Box::new(ExprAst {
+            left: self.left.clone(),
+            right: self.right.clone(),
+            op: self.op,
         })
     }
 }
@@ -412,10 +410,10 @@ impl Ast for CallAst {
         }
     }
 
-    fn clone(&self) -> Box<dyn Ast>{
-        Box::new(CallAst{
-            name : self.name.clone(),
-            args : self.args.clone()
+    fn clone(&self) -> Box<dyn Ast> {
+        Box::new(CallAst {
+            name: self.name.clone(),
+            args: self.args.clone(),
         })
     }
 }

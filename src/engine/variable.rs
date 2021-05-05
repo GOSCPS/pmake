@@ -25,7 +25,6 @@ pub struct Variable {
 }
 
 impl Variable {
-
     pub fn none_value() -> Variable {
         Variable {
             typed: VariableType::None,

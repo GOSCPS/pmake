@@ -7,8 +7,8 @@
 //=========================================================
 
 use crate::engine::ast::ast::Ast;
-use std::hash::Hasher;
 use std::hash::Hash;
+use std::hash::Hasher;
 
 // target
 #[derive(Clone)]
@@ -20,13 +20,11 @@ pub struct Target {
 
 impl PartialEq for Target {
     fn eq(&self, other: &Self) -> bool {
-        self.name == other.name
-        &&
-        self.depends.len() == other.depends.len()
+        self.name == other.name && self.depends.len() == other.depends.len()
     }
 }
 
-impl Eq for Target{}
+impl Eq for Target {}
 
 impl Hash for Target {
     fn hash<H: Hasher>(&self, hasher: &mut H) {

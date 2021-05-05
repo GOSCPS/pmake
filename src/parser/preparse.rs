@@ -7,10 +7,7 @@
 //=========================================================
 
 use std::fs;
-use std::{
-    path::PathBuf,
-    sync::{Arc},
-};
+use std::{path::PathBuf, sync::Arc};
 
 // 行信息
 pub struct LineInfo {
