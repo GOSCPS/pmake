@@ -15,11 +15,9 @@ use crate::{
         parsing::{parsing::parse_rule, utility::TokenStream},
     },
 };
-
+use crate::parser::parsing::parsing::parse_target;
 use crate::parser::parsing::parsing::parse_statement;
 use crate::engine::ast::ast::BlockAst;
-
-use std::sync::Arc;
 
 pub fn parse_tokens(file_name: &String) -> Vec<Token> {
     // 解析tokens
@@ -48,7 +46,7 @@ pub fn parse_file(file_name: &String) -> Result<PFile, ParseError> {
     };
 
     let mut rule_list: Vec<Rule> = Vec::new();
-    let target_list: Vec<Target> = Vec::new();
+    let mut target_list: Vec<Target> = Vec::new();
     let mut statement_list: Vec<Box<dyn Ast>> = Vec::new();
 
     loop {
@@ -70,6 +68,15 @@ pub fn parse_file(file_name: &String) -> Result<PFile, ParseError> {
                 Err(err) => return Err(err),
 
                 Ok(ok) => rule_list.push(ok),
+            }
+        }
+
+        // 收集target
+        else if let super::parse::TokenType::KeywordTarget = tokens.get_current().typed{
+            match parse_target(&mut tokens) {
+                Err(err) => return Err(err),
+
+                Ok(ok) => target_list.push(ok),
             }
         }
 

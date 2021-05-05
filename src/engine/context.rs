@@ -31,6 +31,7 @@ lazy_static! {
     pub static ref GLOBAL_CONTEXT
     : Context = Context::new();
 
+    // 全局函数定义
     pub static ref GLOBAL_FUNCTION
     : Mutex<HashMap<String,Function>>
     = Mutex::from(HashMap::new());

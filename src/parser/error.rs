@@ -34,6 +34,8 @@ impl std::fmt::Display for ParseError {
 
         tool::printer::error_line(&self.source);
 
+        // tool::printer::error_line(&format!("{}{}"," ".repeat(self.offset),"^".repeat(self.length)));
+
         if let Some(some) = &self.reason_str {
             tool::printer::error_line(some);
         }

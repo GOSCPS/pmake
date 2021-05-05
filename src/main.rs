@@ -17,6 +17,7 @@ mod engine;
 mod parser;
 mod standard;
 mod tool;
+mod algorithm;
 
 use tool::printer;
 
@@ -176,7 +177,7 @@ fn main() {
                     match ok.global_statements.execute(&mut Context::new()){
                         Err(err) => {err.to_string();()},
 
-                        Ok(ok) => ()
+                        Ok(_ok) => ()
                     }
 
                 "".to_string()

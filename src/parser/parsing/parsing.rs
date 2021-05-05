@@ -14,6 +14,7 @@ use crate::engine::rule::Rule;
 use crate::parser::error::ParseError;
 use crate::parser::parse::TokenType;
 use crate::parser::parsing::utility::TokenStream;
+use crate::engine::target::Target;
 
 // 解析rule
 pub fn parse_rule(tokens: &mut TokenStream) -> Result<Rule, ParseError> {
@@ -90,6 +91,91 @@ pub fn parse_rule(tokens: &mut TokenStream) -> Result<Rule, ParseError> {
     return Ok(Rule {
         name: rule_name,
         import: rule_args,
+        body: {
+            match parse_statement(tokens) {
+                Err(err) => return Err(err),
+
+                Ok(ok) => ok,
+            }
+        },
+    });
+}
+
+// 解析target
+pub fn parse_target(tokens: &mut TokenStream) -> Result<Target, ParseError> {
+    // 跳过target
+    // tokens.
+    &tokens.next();
+
+    let target_name: String;
+
+    if tokens.is_end() {
+        return Err(tokens.generate_error(
+            Some(String::from("Miss target name!")),
+            Some(String::from(
+                "Usage:target (target name) [: dep1 dep2 dep3...] (Statement)",
+            )),
+        ));
+    }
+    // 需要一个标识符
+    else if let TokenType::Identifier(ident) = &tokens.get_current().typed {
+        target_name = ident.to_string();
+    } else {
+        return Err(tokens.generate_error(
+            Some(String::from("The target name must be identifier!")),
+            Some(String::from(
+                "Usage:target (target name) [: dep1 dep2 dep3...] (Statement)",
+            )),
+        ));
+    }
+
+    // 判断是否有依赖
+    let mut target_deps: Vec<String> = Vec::new();
+
+    &tokens.next();
+
+    // 检查:
+    if tokens.is_end() {
+        return Err(tokens.generate_error(
+            Some(String::from("Miss target statement!")),
+            Some(String::from(
+                "Usage:target (target name) [: dep1 dep2 dep3...] (Statement)",
+            )),
+        ));
+    }
+    // 有: 检查依赖
+    else if let TokenType::Colon = tokens.get_current().typed {
+        // 读取依赖
+
+        &tokens.next();
+
+        loop {
+            // 到达末尾，缺少语句
+            if tokens.is_end() {
+                return Err(tokens.generate_error(
+                    Some(String::from("Miss target statement!")),
+                    Some(String::from(
+                        "Usage:target (target name) [: dep1 dep2 dep3...] (Statement)",
+                    )),
+                ));
+            }
+            // 标识符，视为依赖
+            else if let TokenType::Identifier(ident) = &tokens.get_current().typed {
+                target_deps.push(ident.to_string());
+
+                &tokens.next();
+            }
+            // 非标识符，结束参数读取
+            else {
+                break;
+            }
+        }
+    }
+
+    // 读取语句
+    return Ok(Target {
+        name: target_name,
+        depends: target_deps,
         body: {
             match parse_statement(tokens) {
                 Err(err) => return Err(err),
