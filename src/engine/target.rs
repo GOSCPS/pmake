@@ -11,6 +11,7 @@ use std::hash::Hasher;
 use std::hash::Hash;
 
 // target
+#[derive(Clone)]
 pub struct Target {
     pub name: String,
     pub depends: Vec<String>,

@@ -167,18 +167,14 @@ fn main() {
     // 同时捕获panic
     if panic::catch_unwind(|| {
         let file = parser::control::parse_file(&BUILD_FILE_NAME.lock().unwrap());
-        printer::ok_line("parse file finished");
 
         match file {
             Err(err) => err.to_string(),
 
             Ok(ok) => {
+                printer::ok_line("parse file finished");
 
-                    match ok.global_statements.execute(&mut Context::new()){
-                        Err(err) => {err.to_string();()},
-
-                        Ok(_ok) => ()
-                    }
+                engine::engine::execute_start(ok);
 
                 "".to_string()
             }

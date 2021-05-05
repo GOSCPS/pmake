@@ -9,6 +9,7 @@
 use crate::engine::ast::ast::Ast;
 
 // 规则
+#[derive(Clone)]
 pub struct Rule {
     pub name: String,
     pub import: Vec<String>,
