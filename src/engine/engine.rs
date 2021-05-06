@@ -139,7 +139,6 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
 
                         // 任务循环
                         loop {
-
                             let receiver_lock = receiver.lock().unwrap();
 
                             // 收集任务
@@ -171,7 +170,10 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
 
                                         // 添加到完成列表
                                         Ok(_ok) => {
-                                            crate::tool::printer::ok_line(&format!("The target `{}` build finished!",target.name));
+                                            crate::tool::printer::ok_line(&format!(
+                                                "The target `{}` build finished!",
+                                                target.name
+                                            ));
                                             FINISHED_TARGET_LIST
                                                 .lock()
                                                 .unwrap()
@@ -278,7 +280,7 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
         }
 
         // 休眠
-        // thread::sleep(Duration::new(0, 100000));
+        thread::sleep(Duration::new(0, 100000));
     }
 
     // 关闭线程
