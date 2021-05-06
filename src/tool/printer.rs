@@ -66,14 +66,14 @@ pub fn help_line(msg: &str) {
 }
 
 // Print Debug
-pub fn debug_line(_msg: &str) {
+pub fn debug_line(msg: &str) {
     #[cfg(debug_assertions)]
     {
         println!(
             "{} {}:{}",
             "pmake".bold(),
             "debug".bright_purple().bold(),
-            _msg
+            msg
         );
     }
 }

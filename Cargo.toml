@@ -7,7 +7,6 @@ homepage = "https://github.com/GOSCPS/pmake"
 license = "GOSCPS License v3"
 
 [dependencies]
-ahash = "0.7"
 colored = "2.0.0"
 lazy_static = "1.4.0"
 console = "0.14.1"

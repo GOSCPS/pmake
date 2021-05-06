@@ -234,14 +234,14 @@ fn parse_expression_top(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseE
             }
 
             return Ok(Box::new(CallAst {
-                name: ident,
+                name: ident.clone(),
                 args,
             }));
         }
         // 变量
         else {
             return Ok(Box::new(GetVariableAst {
-                name: ident,
+                name: ident.clone(),
             }));
         }
     }
