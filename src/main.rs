@@ -196,7 +196,7 @@ fn main() {
             Ok(ok) => {
                 printer::ok_line("parse file finished");
 
-                engine::engine::execute_start(ok);
+                engine::engine::execute_start(ok).unwrap();
 
                 "".to_string()
             }

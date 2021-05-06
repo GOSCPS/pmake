@@ -105,14 +105,20 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
     }
 
     let temp = GLOBAL_TARGET_LIST
-        .lock()
-        .unwrap()
-        .values()
-        .clone()
-        .cloned()
-        .collect();
+    .lock()
+    .unwrap()
+    .clone();
+
+    let temp : Vec<&Target>= temp
+            .values().collect();
+
+    let mut aims_ref : Vec<&Target> = Vec::new();
+
+    for aim in aims.iter(){
+        aims_ref.push(aim);
+    }
     // 依赖排序
-    let mut what_we_will_build = crate::algorithm::topological::target_topological(&aims, &temp);
+    let mut what_we_will_build = crate::algorithm::topological::target_topological(&aims_ref, &temp);
 
     // 多线程执行
     let (sender, receiver): (Sender<Arc<Target>>, Receiver<Arc<Target>>) = mpsc::channel();
@@ -147,6 +153,8 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
                                 Err(err) => {
                                     drop(receiver_lock);
 
+                                    crate::tool::printer::error_line(&format!("The receiver recv:{}",err.to_string()));
+
                                     crate::tool::printer::ok_line(&format!(
                                         "The {} exit!",
                                         thread::current().name().unwrap_or("UNKNOWN")
@@ -161,7 +169,7 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
                                     match target.body.execute(&mut Context::new()) {
                                         Err(err) => {
                                             err.to_string();
-                                            err_sender.send(Arc::new(err));
+                                            err_sender.send(Arc::new(err)).unwrap();
                                             crate::tool::printer::ok_line(&format!(
                                                 "{}:The target `{}` build failed!",
                                                 thread::current().name().unwrap_or("UNKNOWN"),
@@ -197,8 +205,10 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
                 // 关闭线程
                 drop(sender);
                 for t in thread_list {
-                    t.join();
+                    t.join().unwrap();
                 }
+
+                crate::tool::printer::error_line(&format!("The err receiver recv:{}",ok.to_string()));
 
                 return Err(RuntimeError {
                     reason_token: None,
@@ -213,11 +223,11 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
                 match err {
                     // 空
                     // 继续
-                    Empty => {}
+                    _empty => {}
 
-                    // 管道被关闭
-                    // 错误
-                    Disconnected => {
+                    // 其他错误
+                    // 退出
+                    /*_ => {
                         crate::tool::printer::error_line(&format!(
                             "The error receiver disconnected!"
                         ));
@@ -225,7 +235,7 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
                         // 关闭线程
                         drop(sender);
                         for t in thread_list {
-                            t.join();
+                            t.join().unwrap();
                         }
 
                         return Err(RuntimeError {
@@ -234,7 +244,7 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
                             reason_str: Some("The error receiver disconnected!".to_string()),
                             help_str: None,
                         });
-                    }
+                    }*/
                 }
             }
         }
@@ -251,7 +261,7 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
                 // 关闭线程
                 drop(sender);
                 for t in thread_list {
-                    t.join();
+                    t.join().unwrap();
                 }
 
                 return Ok(());
@@ -271,21 +281,13 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
 
         // 只在依赖全部完成的时候发布任务
         if finished_depends {
-            sender.send(Arc::from(<Target as Clone>::clone(task)));
+            sender.send(Arc::from(<Target as Clone>::clone(task))).unwrap();
         } else {
             // 送回队列
             what_we_will_build.push_back(task);
         }
 
         // 休眠
-        // thread::sleep(Duration::new(0, 100000));
+        thread::sleep(Duration::new(0, 100000));
     }
-
-    // 关闭线程
-    drop(sender);
-    for t in thread_list {
-        t.join();
-    }
-
-    return Ok(());
 }

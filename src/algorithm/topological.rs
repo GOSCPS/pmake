@@ -10,12 +10,12 @@ use std::collections::{HashMap, VecDeque};
 use crate::engine::target::Target;
 
 pub fn target_topological<'a>(
-    wanted : &'a [Target],
-    total : &'a [Target]
+    wanted : &Vec<&'a Target>,
+    total : &Vec<&'a Target>
 ) -> VecDeque<&'a Target>
 {
 
-    let mut vector: Vec<&Target> = Vec::new();
+    let mut vector: VecDeque<&Target> = VecDeque::new();
     let mut visited : HashMap<&Target, bool, ahash::RandomState> = HashMap::default();
 
     for aim in wanted.iter() {
@@ -27,14 +27,14 @@ pub fn target_topological<'a>(
         );
     }
 
-    vector.into()
+    vector
 }
 
 fn target_topological_visit<'a>(
-    output : &mut Vec<&'a Target>,
+    output : &mut VecDeque<&'a Target>,
     visited : &mut HashMap<&'a Target, bool, ahash::RandomState>,
     aim : &'a Target,
-    total : &'a [Target]
+    total : &Vec<&'a Target>
 ) {
 
     if let Some(some) = visited.get(aim) {
@@ -65,13 +65,13 @@ fn target_topological_visit<'a>(
         else if let Some(dep) = dep {
             target_topological_visit(
                 output,
-                visited,                
+                visited,
                 dep,
                 total
             );
         }
     }
-    output.push(aim);
+    output.push_back(aim);
 
     visited.insert(aim, false);
 }
