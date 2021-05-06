@@ -42,6 +42,7 @@ pub fn println(
     print!("\n");
     Ok(Variable::none_value())
 }
+
 pub fn eprint(
     args: Vec<variable::Variable>,
     _: &mut Context,
@@ -67,6 +68,7 @@ pub fn eprint(
     }
     Ok(Variable::none_value())
 }
+
 pub fn eprintln(
     args: Vec<variable::Variable>,
     context: &mut Context,
