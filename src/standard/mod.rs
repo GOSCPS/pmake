@@ -8,10 +8,14 @@
 
 pub mod print;
 
+use crate::engine::function::Function;
+
 #[inline(always)]
 pub fn register_standard_lib() {
-    let lock = crate::engine::context::GLOBAL_FUNCTION.lock();
-    let mut lock = lock.unwrap();
-    lock.insert("print".to_string(), print::print);
-    lock.insert("println".to_string(), print::println);
+    let mut lock = crate::engine::context::GLOBAL_FUNCTION.lock().unwrap();
+    let mut reg = |name: &'static str, fp: Function| lock.insert(name.to_owned(), fp);
+    reg("print", print::print);
+    reg("println", print::println);
+    reg("eprint", print::eprint);
+    reg("eprintln", print::eprintln);
 }
