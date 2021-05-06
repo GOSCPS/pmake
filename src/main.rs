@@ -13,11 +13,11 @@ use std::process;
 use std::sync::Mutex;
 use std::time::Instant;
 
+mod algorithm;
 mod engine;
 mod parser;
 mod standard;
 mod tool;
-mod algorithm;
 
 use tool::printer;
 
@@ -36,6 +36,10 @@ lazy_static! {
     // 构建文件名称
     pub static ref BUILD_FILE_NAME : Mutex<String>
         = Mutex::new(String::from("pmake.make"));
+
+    // 构建线程名称
+    pub static ref BUILD_THREAD_COUNT : Mutex<u64>
+        = Mutex::new(1_u64);
 }
 
 // 打印帮助
@@ -59,6 +63,10 @@ fn print_help() {
     println!(
         "\t{}\t{}",
         "-define=Key[=Value]", "Set the variable.Default value is `1`."
+    );
+    println!(
+        "\t{}\t{}",
+        "-thread=[Value]", "Set the thread count.Default value is `1`."
     );
 }
 
@@ -98,6 +106,20 @@ fn main() {
             else if arg == "-info" {
                 print_info();
                 process::exit(0);
+            }
+            // 设置线程
+            else if arg.starts_with("-thread=") {
+                *BUILD_THREAD_COUNT.lock().unwrap() = match &arg["-thread=".len()..].parse::<u64>()
+                {
+                    Err(err) => {
+                        printer::error_line(&err.to_string());
+                        printer::error_line("Parse the thread count error");
+
+                        process::exit(1);
+                    }
+
+                    Ok(ok) => *ok,
+                }
             }
             // 全局变量
             else if let Some(def) = arg.strip_prefix("-define=") {
@@ -167,18 +189,14 @@ fn main() {
     // 同时捕获panic
     if panic::catch_unwind(|| {
         let file = parser::control::parse_file(&BUILD_FILE_NAME.lock().unwrap());
-        printer::ok_line("parse file finished");
 
         match file {
             Err(err) => err.to_string(),
 
             Ok(ok) => {
+                printer::ok_line("parse file finished");
 
-                    match ok.global_statements.execute(&mut Context::new()){
-                        Err(err) => {err.to_string();()},
-
-                        Ok(_ok) => ()
-                    }
+                engine::engine::execute_start(ok);
 
                 "".to_string()
             }

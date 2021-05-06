@@ -6,6 +6,9 @@
 // Copyright (c) 2020-2021 GOSCPS 保留所有权利.
 //=========================================================
 
+use crate::engine::ast::ast::BlockAst;
+use crate::parser::parsing::parsing::parse_statement;
+use crate::parser::parsing::parsing::parse_target;
 use crate::{
     engine::{ast::ast::Ast, pfile::PFile, rule::Rule, target::Target},
     parser::{
@@ -15,9 +18,6 @@ use crate::{
         parsing::{parsing::parse_rule, utility::TokenStream},
     },
 };
-use crate::parser::parsing::parsing::parse_target;
-use crate::parser::parsing::parsing::parse_statement;
-use crate::engine::ast::ast::BlockAst;
 
 pub fn parse_tokens(file_name: &String) -> Vec<Token> {
     // 解析tokens
@@ -55,13 +55,11 @@ pub fn parse_file(file_name: &String) -> Result<PFile, ParseError> {
         if tokens.is_end() {
             break;
         }
-
         // 忽略EndLine
         else if tokens.get_current().typed == TokenType::EndLine {
             tokens.next();
             continue;
         }
-
         // 收集rule
         else if let super::parse::TokenType::KeywordRule = tokens.get_current().typed {
             match parse_rule(&mut tokens) {
@@ -70,22 +68,20 @@ pub fn parse_file(file_name: &String) -> Result<PFile, ParseError> {
                 Ok(ok) => rule_list.push(ok),
             }
         }
-
         // 收集target
-        else if let super::parse::TokenType::KeywordTarget = tokens.get_current().typed{
+        else if let super::parse::TokenType::KeywordTarget = tokens.get_current().typed {
             match parse_target(&mut tokens) {
                 Err(err) => return Err(err),
 
                 Ok(ok) => target_list.push(ok),
             }
         }
-
         // 收集statement
         else {
-            match parse_statement(&mut tokens){
+            match parse_statement(&mut tokens) {
                 Err(err) => return Err(err),
 
-                Ok(ok) => statement_list.push(ok)
+                Ok(ok) => statement_list.push(ok),
             }
         }
         // TODO 收集target
@@ -96,8 +92,8 @@ pub fn parse_file(file_name: &String) -> Result<PFile, ParseError> {
         file: std::fs::canonicalize(&file_name).unwrap(),
         rules: rule_list,
         targets: target_list,
-        global_statements: Box::new(BlockAst{
-            blocks : statement_list
+        global_statements: Box::new(BlockAst {
+            blocks: statement_list,
         }),
     });
 }

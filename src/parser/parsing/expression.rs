@@ -17,7 +17,7 @@ use crate::parser::parse::Token;
 use crate::parser::parse::TokenType;
 use crate::parser::parsing::utility::TokenStream;
 use std::convert::TryFrom;
-use std::{sync::Arc};
+use std::sync::Arc;
 
 // 表达式解析从这里开始
 // + -
@@ -240,7 +240,6 @@ fn parse_expression_top(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseE
         }
         // 变量
         else {
-
             return Ok(Box::new(GetVariableAst {
                 name: ident,
             }));

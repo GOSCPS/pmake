@@ -11,10 +11,10 @@ use crate::engine::ast::ast::AssignmentAst;
 use crate::engine::ast::ast::BlockAst;
 use crate::engine::ast::ast::{Ast, NopAst};
 use crate::engine::rule::Rule;
+use crate::engine::target::Target;
 use crate::parser::error::ParseError;
 use crate::parser::parse::TokenType;
 use crate::parser::parsing::utility::TokenStream;
-use crate::engine::target::Target;
 
 // 解析rule
 pub fn parse_rule(tokens: &mut TokenStream) -> Result<Rule, ParseError> {

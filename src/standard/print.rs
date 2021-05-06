@@ -31,7 +31,6 @@ pub fn print(
             }
         }
     }
-
     Ok(Variable::none_value())
 }
 

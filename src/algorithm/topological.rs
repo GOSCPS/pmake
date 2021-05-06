@@ -65,7 +65,7 @@ fn target_topological_visit<'a>(
         else if let Some(dep) = dep {
             target_topological_visit(
                 output,
-                visited,
+                visited,                
                 dep,
                 total
             );

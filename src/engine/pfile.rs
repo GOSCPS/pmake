@@ -11,6 +11,7 @@ use crate::engine::{ast::ast::Ast, rule::Rule};
 use std::path::PathBuf;
 
 //文件
+#[derive(Clone)]
 pub struct PFile {
     pub file: PathBuf,
     pub rules: Vec<Rule>,

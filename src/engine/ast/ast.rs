@@ -14,10 +14,18 @@ use crate::engine::{
 use std::sync::Arc;
 
 // 抽象语法树
-pub trait Ast {
+pub trait Ast: Send + Sync {
     fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError>;
+    fn clone(&self) -> Box<dyn Ast>;
 }
 
+impl Clone for Box<dyn Ast> {
+    fn clone(&self) -> Self {
+        Ast::clone(&**self)
+    }
+}
+
+#[derive(Clone)]
 pub struct NopAst {}
 
 impl Ast for NopAst {
@@ -28,8 +36,12 @@ impl Ast for NopAst {
             typed: variable::VariableType::None,
         })
     }
+    fn clone(&self) -> Box<dyn Ast> {
+        Box::new(NopAst {})
+    }
 }
 
+#[derive(Clone)]
 pub struct AssignmentAst {
     pub global: bool,
     pub name: String,
@@ -62,8 +74,16 @@ impl Ast for AssignmentAst {
             Err(err) => Err(err),
         }
     }
-}
 
+    fn clone(&self) -> Box<dyn Ast> {
+        Box::new(AssignmentAst {
+            global: self.global,
+            name: self.name.clone(),
+            value: self.value.clone(),
+        })
+    }
+}
+#[derive(Clone)]
 pub struct ImmediateAst {
     pub immediate: Variable,
 }
@@ -72,8 +92,15 @@ impl Ast for ImmediateAst {
     fn execute(&self, _context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
         return Ok(self.immediate.clone());
     }
+
+    fn clone(&self) -> Box<dyn Ast> {
+        Box::new(ImmediateAst {
+            immediate: self.immediate.clone(),
+        })
+    }
 }
 
+#[derive(Clone)]
 pub struct BlockAst {
     pub blocks: Vec<Box<dyn Ast>>,
 }
@@ -92,9 +119,16 @@ impl Ast for BlockAst {
 
         return Ok(var);
     }
+
+    fn clone(&self) -> Box<dyn Ast> {
+        Box::new(BlockAst {
+            blocks: self.blocks.clone(),
+        })
+    }
 }
 
 // 获取变量Ast
+#[derive(Clone)]
 pub struct GetVariableAst {
     pub name: String,
 }
@@ -142,9 +176,15 @@ impl Ast for GetVariableAst {
             });
         }
     }
+
+    fn clone(&self) -> Box<dyn Ast> {
+        Box::new(GetVariableAst {
+            name: self.name.clone(),
+        })
+    }
 }
 
-#[derive(std::cmp::PartialEq)]
+#[derive(std::cmp::PartialEq, Clone, Copy)]
 pub enum ExprOp {
     Add,
     Sub,
@@ -156,6 +196,7 @@ pub enum ExprOp {
 }
 
 // 表达式AST
+#[derive(Clone)]
 pub struct ExprAst {
     pub left: Box<dyn Ast>,
     pub right: Box<dyn Ast>,
@@ -317,9 +358,18 @@ impl Ast for ExprAst {
             }
         }
     }
+
+    fn clone(&self) -> Box<dyn Ast> {
+        Box::new(ExprAst {
+            left: self.left.clone(),
+            right: self.right.clone(),
+            op: self.op,
+        })
+    }
 }
 
 // 函数调用Ast
+#[derive(Clone)]
 pub struct CallAst {
     pub name: String,
     pub args: Vec<Box<dyn Ast>>,
@@ -358,5 +408,12 @@ impl Ast for CallAst {
                 })
             }
         }
+    }
+
+    fn clone(&self) -> Box<dyn Ast> {
+        Box::new(CallAst {
+            name: self.name.clone(),
+            args: self.args.clone(),
+        })
     }
 }

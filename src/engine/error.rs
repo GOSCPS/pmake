@@ -6,15 +6,15 @@
 // Copyright (c) 2020-2021 GOSCPS 保留所有权利.
 //=========================================================
 
+use crate::parser::parse::Token;
 use crate::tool;
-use crate::{parser::parse::Token};
-use std::{error::Error};
+use std::error::Error;
 
 //解析错误
 #[derive(Debug)]
 pub struct RuntimeError {
     pub reason_token: Option<Token>,
-    pub reason_err: Option<Box<dyn Error>>,
+    pub reason_err: Option<Box<dyn Error + Send + Sync>>,
     pub reason_str: Option<String>,
     pub help_str: Option<String>,
 }
@@ -44,6 +44,9 @@ impl std::fmt::Display for RuntimeError {
 
 impl std::error::Error for RuntimeError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        self.reason_err.as_deref()
+        self.reason_err.as_deref().map(|x| {
+            let err: &(dyn Error + 'static) = x;
+            err
+        })
     }
 }
