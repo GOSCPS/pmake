@@ -193,13 +193,15 @@ fn parse_token_string(chars: &[char], ptr: &mut usize) -> Result<String, String>
                         }
 
                         // 正确的，谢谢
-                        Ok(unicode) => match char::from_u32(unicode) {
+                        Ok(unicode) => match char::try_from(unicode) {
                             // 太差太差
-                            None => {
-                                return Err(String::from("Parse the unicode char filed!"));
+                            Err(err) => {
+                                crate::tool::printer::error_line(&format!("Parsing unicode failed:{}",err.to_string()));
+                                return Err(String::from("Parse the unicode char error!"));
                             }
+
                             // 正确的，谢谢
-                            Some(unicode) => {
+                            Ok(unicode) => {
                                 str.push(unicode);
                             }
                         },
