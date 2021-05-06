@@ -14,13 +14,13 @@ use std::sync::RwLock;
 
 // 上下文
 pub struct Context {
-    pub variable_table: RwLock<HashMap<String, Variable>>,
+    pub variable_table: RwLock<HashMap<String, Variable, ahash::RandomState>>,
 }
 
 impl Context {
     pub fn new() -> Context {
         return Context {
-            variable_table: RwLock::from(HashMap::new()),
+            variable_table: RwLock::from(HashMap::default()),
         };
     }
 }
@@ -33,6 +33,6 @@ lazy_static! {
 
     // 全局函数定义
     pub static ref GLOBAL_FUNCTION
-    : Mutex<HashMap<String,Function>>
-    = Mutex::from(HashMap::new());
+    : Mutex<HashMap<String, Function, ahash::RandomState>>
+    = Mutex::new(HashMap::default());
 }
