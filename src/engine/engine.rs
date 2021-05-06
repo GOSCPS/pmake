@@ -139,9 +139,14 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
 
                         // 任务循环
                         loop {
+
+                            let receiver_lock = receiver.lock().unwrap();
+
                             // 收集任务
-                            match receiver.lock().unwrap().recv() {
+                            match receiver_lock.recv() {
                                 Err(err) => {
+                                    drop(receiver_lock);
+
                                     crate::tool::printer::ok_line(&format!(
                                         "The {} exit!",
                                         thread::current().name().unwrap_or("UNKNOWN")
@@ -149,24 +154,28 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
                                     return;
                                 }
 
-                                Ok(ok) => {
+                                Ok(target) => {
+                                    drop(receiver_lock);
+
                                     // 执行任务
-                                    match ok.body.execute(&mut Context::new()) {
+                                    match target.body.execute(&mut Context::new()) {
                                         Err(err) => {
                                             err.to_string();
                                             err_sender.send(Arc::new(err));
                                             crate::tool::printer::ok_line(&format!(
-                                                "The {} build failed!",
-                                                thread::current().name().unwrap_or("UNKNOWN")
+                                                "{}:The target `{}` build failed!",
+                                                thread::current().name().unwrap_or("UNKNOWN"),
+                                                target.name
                                             ));
                                         }
 
                                         // 添加到完成列表
-                                        Ok(ok) => {
+                                        Ok(_ok) => {
+                                            crate::tool::printer::ok_line(&format!("The target `{}` build finished!",target.name));
                                             FINISHED_TARGET_LIST
                                                 .lock()
                                                 .unwrap()
-                                                .push(ok.name.to_string());
+                                                .push(target.name.to_string());
                                         }
                                     }
                                 }
