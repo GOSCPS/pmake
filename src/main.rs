@@ -1,4 +1,4 @@
-//=========================================================
+=========================================================
 // 这个文件来自 GOSCPS(https://github.com/GOSCPS)
 // 使用 GOSCPS 许可证
 // File:    main.rs
@@ -44,9 +44,9 @@ lazy_static! {
 
 // 打印帮助
 fn print_help() {
-    let args: Vec<String> = env::args().collect();
+    let args = env::args();
 
-    println!("Usgae:{} [-Options] [Targets]", &args[0]);
+    println!("Usgae:{} [-Options] [Targets]", args.nth(0).unwrap());
     println!("Options:");
     println!(
         "\t{}\t\t\t{}",
@@ -83,11 +83,13 @@ fn main() {
     {
         let mut is_print_logo = true;
 
-        let args: Vec<String> = env::args().collect();
+        let mut args = env::args();
+
+        args.next();
 
         // 解析参数
         // 只截取参数部分
-        for arg in &args[1..] {
+        for arg in args {
             // 不打印Logo
             if arg == "-noLogo" {
                 is_print_logo = false;
@@ -196,17 +198,7 @@ fn main() {
             Ok(ok) => {
                 printer::ok_line("parse file finished");
 
-                match engine::engine::execute_start(ok) {
-                    Err(err) => {
-                        // err.to_string();
-
-                        printer::debug_line(&format!("{:?}", err));
-
-                        panic!("Runtime error!");
-                    }
-
-                    Ok(_ok) => (),
-                }
+                engine::engine::execute_start(ok).unwrap();
 
                 "".to_string()
             }
