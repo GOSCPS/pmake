@@ -6,6 +6,7 @@
 // Copyright (c) 2020-2021 GOSCPS 保留所有权利.
 //=========================================================
 
+pub mod help;
 pub mod print;
 
 use crate::engine::function::Function;
@@ -18,4 +19,5 @@ pub fn register_standard_lib() {
     reg("println", print::println);
     reg("eprint", print::eprint);
     reg("eprintln", print::eprintln);
+    reg("abort", help::abort);
 }

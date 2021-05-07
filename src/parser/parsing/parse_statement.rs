@@ -77,7 +77,8 @@ pub fn parse_statement_assignment(tokens: &mut TokenStream)
             return Ok(Box::new(AssignmentAst{
                 global,
                 name,
-                value
+                value,
+                position : Some((tokens.get_current().file.clone(),tokens.get_current().line_number))
             }))
         }
     }
@@ -97,7 +98,9 @@ pub fn parse_statement(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseEr
     // 空语句
     if let TokenType::Semicolon = tokens.get_current().typed{
         tokens.next();
-        return Ok(Box::new(NopAst{}));
+        return Ok(Box::new(NopAst{
+            position : Some((tokens.get_current().file.clone(),tokens.get_current().line_number))
+        }));
     }
 
     // 语句块
@@ -133,7 +136,8 @@ pub fn parse_statement(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseEr
         }
 
         return Ok(Box::new(BlockAst{
-            blocks
+            blocks,
+            position : Some((tokens.get_current().file.clone(),tokens.get_current().line_number))
         }));
     }
 

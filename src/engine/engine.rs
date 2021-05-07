@@ -47,6 +47,7 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
                     &rules.name, start.file
                 )),
                 help_str: None,
+                error_ast: None,
             });
         } else {
             GLOBAL_RULE_LIST
@@ -69,6 +70,7 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
                     &target.name, start.file
                 )),
                 help_str: None,
+                error_ast: None,
             });
         } else {
             GLOBAL_TARGET_LIST
@@ -85,6 +87,16 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
         Ok(_ok) => (),
     }
 
+    // 检查目标是否为空
+    if crate::TARGET_LIST.lock().unwrap().len() == 0 {
+        // 添加default
+        crate::TARGET_LIST
+            .lock()
+            .unwrap()
+            .push("default".to_string());
+        crate::tool::printer::warn_line(&format!("The aim is empty.Build `default`."));
+    }
+
     let mut aims: Vec<Target> = Vec::new();
     // 获取目标
     for aim_name in crate::TARGET_LIST.lock().unwrap().iter() {
@@ -99,26 +111,24 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
                     reason_err: None,
                     reason_str: Some(format!("Miss aim target `{}`!", aim_name)),
                     help_str: None,
+                    error_ast: None,
                 });
             }
         }
     }
 
-    let temp = GLOBAL_TARGET_LIST
-    .lock()
-    .unwrap()
-    .clone();
+    let temp = GLOBAL_TARGET_LIST.lock().unwrap().clone();
 
-    let temp : Vec<&Target>= temp
-            .values().collect();
+    let temp: Vec<&Target> = temp.values().collect();
 
-    let mut aims_ref : Vec<&Target> = Vec::new();
+    let mut aims_ref: Vec<&Target> = Vec::new();
 
-    for aim in aims.iter(){
+    for aim in aims.iter() {
         aims_ref.push(aim);
     }
     // 依赖排序
-    let mut what_we_will_build = crate::algorithm::topological::target_topological(&aims_ref, &temp);
+    let mut what_we_will_build =
+        crate::algorithm::topological::target_topological(&aims_ref, &temp);
 
     // 多线程执行
     let (sender, receiver): (Sender<Arc<Target>>, Receiver<Arc<Target>>) = mpsc::channel();
@@ -145,15 +155,35 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
 
                         // 任务循环
                         loop {
-
                             let receiver_lock = receiver.lock().unwrap();
 
                             // 收集任务
                             match receiver_lock.recv() {
                                 Err(err) => {
+                                    // 收集任务失败
+                                    // 视作错误
+                                    // 退出
                                     drop(receiver_lock);
 
-                                    crate::tool::printer::error_line(&format!("The receiver recv:{}",err.to_string()));
+                                    // 发送错误
+                                    err_sender
+                                        .send(Arc::new(RuntimeError {
+                                            reason_token: None,
+                                            reason_err: None,
+                                            reason_str: Some(format!(
+                                                "The receiver recv:{}",
+                                                err.to_string()
+                                            )),
+                                            help_str: None,
+                                            error_ast: None,
+                                        }))
+                                        .unwrap();
+
+                                    // 打印信息
+                                    crate::tool::printer::debug_line(&format!(
+                                        "The receiver recv:{}",
+                                        err.to_string()
+                                    ));
 
                                     crate::tool::printer::ok_line(&format!(
                                         "The {} exit!",
@@ -164,22 +194,69 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
 
                                 Ok(target) => {
                                     drop(receiver_lock);
+                                    // drop和body共享context
+                                    let mut context = Context::new();
 
                                     // 执行任务
-                                    match target.body.execute(&mut Context::new()) {
+                                    match target.body.execute(&mut context) {
+                                        // 翻车
                                         Err(err) => {
+                                            // 打印一些错误
                                             err.to_string();
-                                            err_sender.send(Arc::new(err)).unwrap();
-                                            crate::tool::printer::ok_line(&format!(
+
+                                            crate::tool::printer::debug_line(&format!(
+                                                "{}:{:?}",
+                                                thread::current().name().unwrap_or("UNKNOWN"),
+                                                err
+                                            ));
+
+                                            crate::tool::printer::error_line(&format!(
                                                 "{}:The target `{}` build failed!",
                                                 thread::current().name().unwrap_or("UNKNOWN"),
                                                 target.name
                                             ));
+
+                                            // 发送错误
+                                            err_sender.send(Arc::new(err)).unwrap();
+
+                                            // 执行Drop
+                                            if let Some(drops) = target.drop.clone() {
+                                                crate::tool::printer::debug_line(&format!(
+                                                    "{}:Execute target `{}` drop function!",
+                                                    thread::current().name().unwrap_or("UNKNOWN"),
+                                                    target.name
+                                                ));
+
+                                                // 捕获执行错误
+                                                match drops.execute(&mut context) {
+                                                    Err(drop_err) => {
+                                                        // 打印信息 & 发送错误
+                                                        drop_err.to_string();
+
+                                                        crate::tool::printer::debug_line(&format!(
+                                                            "{}:{:?}",
+                                                            thread::current()
+                                                                .name()
+                                                                .unwrap_or("UNKNOWN"),
+                                                            drop_err
+                                                        ));
+
+                                                        err_sender
+                                                            .send(Arc::new(drop_err))
+                                                            .unwrap();
+                                                    }
+
+                                                    Ok(_ok) => (),
+                                                }
+                                            }
                                         }
 
                                         // 添加到完成列表
                                         Ok(_ok) => {
-                                            crate::tool::printer::ok_line(&format!("The target `{}` build finished!",target.name));
+                                            crate::tool::printer::ok_line(&format!(
+                                                "The target `{}` build finished!",
+                                                target.name
+                                            ));
                                             FINISHED_TARGET_LIST
                                                 .lock()
                                                 .unwrap()
@@ -208,13 +285,17 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
                     t.join().unwrap();
                 }
 
-                crate::tool::printer::error_line(&format!("The err receiver recv:{}",ok.to_string()));
+                crate::tool::printer::debug_line(&format!(
+                    "The err receiver recv:{:?}",
+                    ok
+                ));
 
                 return Err(RuntimeError {
                     reason_token: None,
                     reason_err: None,
                     reason_str: Some("The worker build filed!".to_string()),
                     help_str: None,
+                    error_ast: None,
                 });
             }
 
@@ -223,28 +304,26 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
                 match err {
                     // 空
                     // 继续
-                    _empty => {}
+                    _empty => {} // 其他错误
+                                 // 退出
+                                 /*_ => {
+                                     crate::tool::printer::error_line(&format!(
+                                         "The error receiver disconnected!"
+                                     ));
 
-                    // 其他错误
-                    // 退出
-                    /*_ => {
-                        crate::tool::printer::error_line(&format!(
-                            "The error receiver disconnected!"
-                        ));
+                                     // 关闭线程
+                                     drop(sender);
+                                     for t in thread_list {
+                                         t.join().unwrap();
+                                     }
 
-                        // 关闭线程
-                        drop(sender);
-                        for t in thread_list {
-                            t.join().unwrap();
-                        }
-
-                        return Err(RuntimeError {
-                            reason_token: None,
-                            reason_err: None,
-                            reason_str: Some("The error receiver disconnected!".to_string()),
-                            help_str: None,
-                        });
-                    }*/
+                                     return Err(RuntimeError {
+                                         reason_token: None,
+                                         reason_err: None,
+                                         reason_str: Some("The error receiver disconnected!".to_string()),
+                                         help_str: None,
+                                     });
+                                 }*/
                 }
             }
         }
@@ -256,7 +335,7 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
         let task = match task_map {
             // 无任务
             None => {
-                crate::tool::printer::debug_line("Done - wait thread exit");
+                crate::tool::printer::debug_line("Done - wait work thread exit");
 
                 // 关闭线程
                 drop(sender);
@@ -281,7 +360,9 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
 
         // 只在依赖全部完成的时候发布任务
         if finished_depends {
-            sender.send(Arc::from(<Target as Clone>::clone(task))).unwrap();
+            sender
+                .send(Arc::from(<Target as Clone>::clone(task)))
+                .unwrap();
         } else {
             // 送回队列
             what_we_will_build.push_back(task);

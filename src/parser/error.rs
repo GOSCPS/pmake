@@ -45,7 +45,7 @@ impl std::fmt::Display for ParseError {
         }
 
         if let Some(some) = &self.reason_token {
-            tool::printer::error_line(&format!("From token:{:?}", some));
+            tool::printer::debug_line(&format!("From token:{:?}", some));
         }
 
         Ok(())

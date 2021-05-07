@@ -13,7 +13,6 @@ use crate::engine::{
     variable::VariableType,
 };
 use crate::parser::error::ParseError;
-use crate::parser::parse::Token;
 use crate::parser::parse::TokenType;
 use crate::parser::parsing::utility::TokenStream;
 use std::convert::TryFrom;
@@ -23,11 +22,26 @@ use std::sync::Arc;
 // + -
 fn parse_expression_floor(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseError> {
     let mut expr = Box::new(ExprAst {
-        left: Box::new(NopAst {}),
-        right: Box::new(NopAst {}),
+        left: Box::new(NopAst {
+            position: Some((
+                tokens.get_current().file.clone(),
+                tokens.get_current().line_number,
+            )),
+        }),
+        right: Box::new(NopAst {
+            position: Some((
+                tokens.get_current().file.clone(),
+                tokens.get_current().line_number,
+            )),
+        }),
         op: crate::engine::ast::ast::ExprOp::Left,
+        position: Some((
+            tokens.get_current().file.clone(),
+            tokens.get_current().line_number,
+        )),
     });
 
+    // 可空
     if tokens.is_end() {
         return Ok(expr);
     }
@@ -49,8 +63,17 @@ fn parse_expression_floor(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, Pars
                 let l = expr;
                 expr = Box::new(ExprAst {
                     left: l,
-                    right: Box::new(NopAst {}),
+                    right: Box::new(NopAst {
+                        position: Some((
+                            tokens.get_current().file.clone(),
+                            tokens.get_current().line_number,
+                        )),
+                    }),
                     op: crate::engine::ast::ast::ExprOp::Add,
+                    position: Some((
+                        tokens.get_current().file.clone(),
+                        tokens.get_current().line_number,
+                    )),
                 });
             } else {
                 expr.op = ExprOp::Add;
@@ -70,8 +93,17 @@ fn parse_expression_floor(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, Pars
                 let l = expr;
                 expr = Box::new(ExprAst {
                     left: l,
-                    right: Box::new(NopAst {}),
+                    right: Box::new(NopAst {
+                        position: Some((
+                            tokens.get_current().file.clone(),
+                            tokens.get_current().line_number,
+                        )),
+                    }),
                     op: crate::engine::ast::ast::ExprOp::Sub,
+                    position: Some((
+                        tokens.get_current().file.clone(),
+                        tokens.get_current().line_number,
+                    )),
                 });
             } else {
                 expr.op = ExprOp::Sub;
@@ -94,13 +126,28 @@ fn parse_expression_floor(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, Pars
 // * /
 fn parse_expression_second(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseError> {
     let mut expr = Box::new(ExprAst {
-        left: Box::new(NopAst {}),
-        right: Box::new(NopAst {}),
+        left: Box::new(NopAst {
+            position: Some((
+                tokens.get_current().file.clone(),
+                tokens.get_current().line_number,
+            )),
+        }),
+        right: Box::new(NopAst {
+            position: Some((
+                tokens.get_current().file.clone(),
+                tokens.get_current().line_number,
+            )),
+        }),
         op: crate::engine::ast::ast::ExprOp::Left,
+        position: Some((
+            tokens.get_current().file.clone(),
+            tokens.get_current().line_number,
+        )),
     });
 
+    // 需要至少一项
     if tokens.is_end() {
-        return Ok(expr);
+        return Err(tokens.generate_error(Some("Expect expression term!".to_string()), None));
     }
 
     match parse_expression_third(tokens) {
@@ -119,8 +166,17 @@ fn parse_expression_second(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, Par
                 let l = expr;
                 expr = Box::new(ExprAst {
                     left: l,
-                    right: Box::new(NopAst {}),
+                    right: Box::new(NopAst {
+                        position: Some((
+                            tokens.get_current().file.clone(),
+                            tokens.get_current().line_number,
+                        )),
+                    }),
                     op: crate::engine::ast::ast::ExprOp::Mul,
+                    position: Some((
+                        tokens.get_current().file.clone(),
+                        tokens.get_current().line_number,
+                    )),
                 });
             } else {
                 expr.op = ExprOp::Mul;
@@ -140,8 +196,17 @@ fn parse_expression_second(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, Par
                 let l = expr;
                 expr = Box::new(ExprAst {
                     left: l,
-                    right: Box::new(NopAst {}),
+                    right: Box::new(NopAst {
+                        position: Some((
+                            tokens.get_current().file.clone(),
+                            tokens.get_current().line_number,
+                        )),
+                    }),
                     op: crate::engine::ast::ast::ExprOp::Div,
+                    position: Some((
+                        tokens.get_current().file.clone(),
+                        tokens.get_current().line_number,
+                    )),
                 });
             } else {
                 expr.op = ExprOp::Div;
@@ -163,22 +228,26 @@ fn parse_expression_second(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, Par
 
 // ()
 fn parse_expression_third(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseError> {
+    // 需要至少一项
     if tokens.is_end() {
-        return Ok(Box::new(NopAst {}));
+        return Err(tokens.generate_error(Some("Expect expression term!".to_string()), None));
     }
 
     // 检查到()
     if tokens.get_current().typed == TokenType::Parentheses {
         tokens.next();
 
+        // 继续检查)
         match parse_expression_floor(tokens) {
             Err(err) => return Err(err),
 
             Ok(ok) => {
+                // 莫得) 报错
                 if tokens.is_end() || tokens.get_current().typed != TokenType::ParenthesesEnd {
                     return Err(tokens
                         .generate_error(Some("Miss token `)` to match `(`!".to_string()), None));
                 } else {
+                    // 移动到)下一个
                     tokens.next();
                     return Ok(ok);
                 }
@@ -192,8 +261,9 @@ fn parse_expression_third(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, Pars
 
 // func() var
 fn parse_expression_top(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseError> {
+    // 需要至少一项
     if tokens.is_end() {
-        return Ok(Box::new(NopAst {}));
+        return Err(tokens.generate_error(Some("Expect expression term!".to_string()), None));
     }
 
     // 检查变量名称
@@ -214,6 +284,11 @@ fn parse_expression_top(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseE
                         Some("The function call args list not match to `)`!".to_string()),
                         Some("You need the token `)`.".to_string()),
                     ));
+                }
+                // ) 结束
+                else if tokens.get_current().typed == TokenType::ParenthesesEnd {
+                    tokens.next();
+                    break;
                 }
 
                 match parse_expression_floor(tokens) {
@@ -236,12 +311,20 @@ fn parse_expression_top(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseE
             return Ok(Box::new(CallAst {
                 name: ident,
                 args,
+                position: Some((
+                    tokens.get_current().file.clone(),
+                    tokens.get_current().line_number,
+                )),
             }));
         }
         // 变量
         else {
             return Ok(Box::new(GetVariableAst {
                 name: ident,
+                position: Some((
+                    tokens.get_current().file.clone(),
+                    tokens.get_current().line_number,
+                )),
             }));
         }
     }
@@ -255,6 +338,10 @@ fn parse_expression_top(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseE
                 name: Arc::from("# ImmediateAst For String #"),
                 typed: VariableType::Str(s),
             },
+            position: Some((
+                tokens.get_current().file.clone(),
+                tokens.get_current().line_number,
+            )),
         }));
     } else if let TokenType::Number(num) = tokens.get_current().typed {
         tokens.next();
@@ -272,6 +359,10 @@ fn parse_expression_top(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseE
                     Ok(ok) => ok,
                 }),
             },
+            position: Some((
+                tokens.get_current().file.clone(),
+                tokens.get_current().line_number,
+            )),
         }));
     } else {
         return Err(tokens.generate_error(Some("Unknown expression!".to_string()), None));
@@ -288,63 +379,5 @@ pub fn parse_expression(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseE
         ));
     }
 
-    // 收集表达式
-    let mut exprs: Vec<Token> = Vec::new();
-
-    loop {
-        let i: String = if let TokenType::Identifier(ide) = &tokens.get_current().typed {
-            ide.to_string()
-        } else {
-            String::new()
-        };
-
-        let n: isize = if let TokenType::Number(num) = tokens.get_current().typed {
-            num
-        } else {
-            0_isize
-        };
-
-        let s: String = if let TokenType::String(strs) = &tokens.get_current().typed {
-            strs.to_string()
-        } else {
-            String::new()
-        };
-
-        if tokens.is_end() {
-            break;
-        } else if tokens.get_current().typed == TokenType::Parentheses
-            || tokens.get_current().typed == TokenType::ParenthesesEnd
-            || tokens.get_current().typed == TokenType::Add
-            || tokens.get_current().typed == TokenType::Sub
-            || tokens.get_current().typed == TokenType::Mul
-            || tokens.get_current().typed == TokenType::Div
-            || tokens.get_current().typed == TokenType::Identifier(i)
-            || tokens.get_current().typed == TokenType::Number(n)
-            || tokens.get_current().typed == TokenType::String(s)
-        {
-            exprs.push(tokens.get_current().clone());
-            tokens.next();
-        } else {
-            break;
-        }
-    }
-
-    // Debug Output
-    for exp in exprs.iter() {
-        crate::tool::printer::debug_line(&format!("EXPR:{:?}", exp));
-    }
-
-    let mut input = TokenStream {
-        tokens: exprs,
-        ptr: 0_usize,
-    };
-
-    let buf = parse_expression_floor(&mut input);
-
-    // 未检查完整input
-    // 视为表达式错误
-    if !input.is_end() {
-        return Err(input.generate_error(Some("Unknown expression!".to_string()), None));
-    }
-    return buf;
+    return parse_expression_floor(tokens);
 }

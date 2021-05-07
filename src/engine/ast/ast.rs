@@ -11,12 +11,16 @@ use crate::engine::{
     error::{self, RuntimeError},
     variable::{self, Variable, VariableType},
 };
+use std::path::PathBuf;
 use std::sync::Arc;
 
 // 抽象语法树
 pub trait Ast: Send + Sync {
     fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError>;
     fn clone(&self) -> Box<dyn Ast>;
+
+    // return (文件名称,行号)
+    fn get_position(&self) -> Option<(Arc<PathBuf>, usize)>;
 }
 
 impl Clone for Box<dyn Ast> {
@@ -26,7 +30,9 @@ impl Clone for Box<dyn Ast> {
 }
 
 #[derive(Clone)]
-pub struct NopAst {}
+pub struct NopAst {
+    pub position: Option<(Arc<PathBuf>, usize)>,
+}
 
 impl Ast for NopAst {
     fn execute(&self, _context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
@@ -37,7 +43,12 @@ impl Ast for NopAst {
         })
     }
     fn clone(&self) -> Box<dyn Ast> {
-        Box::new(NopAst {})
+        Box::new(NopAst {
+            position: self.position.clone(),
+        })
+    }
+    fn get_position(&self) -> Option<(Arc<PathBuf>, usize)> {
+        return self.position.clone();
     }
 }
 
@@ -46,6 +57,7 @@ pub struct AssignmentAst {
     pub global: bool,
     pub name: String,
     pub value: Box<dyn Ast>,
+    pub position: Option<(Arc<PathBuf>, usize)>,
 }
 
 impl Ast for AssignmentAst {
@@ -80,12 +92,17 @@ impl Ast for AssignmentAst {
             global: self.global,
             name: self.name.clone(),
             value: self.value.clone(),
+            position: self.position.clone(),
         })
+    }
+    fn get_position(&self) -> Option<(Arc<PathBuf>, usize)> {
+        return self.position.clone();
     }
 }
 #[derive(Clone)]
 pub struct ImmediateAst {
     pub immediate: Variable,
+    pub position: Option<(Arc<PathBuf>, usize)>,
 }
 
 impl Ast for ImmediateAst {
@@ -96,13 +113,18 @@ impl Ast for ImmediateAst {
     fn clone(&self) -> Box<dyn Ast> {
         Box::new(ImmediateAst {
             immediate: self.immediate.clone(),
+            position: self.position.clone(),
         })
+    }
+    fn get_position(&self) -> Option<(Arc<PathBuf>, usize)> {
+        return self.position.clone();
     }
 }
 
 #[derive(Clone)]
 pub struct BlockAst {
     pub blocks: Vec<Box<dyn Ast>>,
+    pub position: Option<(Arc<PathBuf>, usize)>,
 }
 
 impl Ast for BlockAst {
@@ -123,7 +145,11 @@ impl Ast for BlockAst {
     fn clone(&self) -> Box<dyn Ast> {
         Box::new(BlockAst {
             blocks: self.blocks.clone(),
+            position: self.position.clone(),
         })
+    }
+    fn get_position(&self) -> Option<(Arc<PathBuf>, usize)> {
+        return self.position.clone();
     }
 }
 
@@ -131,9 +157,17 @@ impl Ast for BlockAst {
 #[derive(Clone)]
 pub struct GetVariableAst {
     pub name: String,
+    pub position: Option<(Arc<PathBuf>, usize)>,
 }
 
 impl Ast for GetVariableAst {
+    fn clone(&self) -> Box<dyn Ast> {
+        Box::new(GetVariableAst {
+            name: self.name.clone(),
+            position: self.position.clone(),
+        })
+    }
+
     fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
         // 从本地变量获取
         if context
@@ -173,14 +207,13 @@ impl Ast for GetVariableAst {
                 reason_err: None,
                 reason_str: Some(format!("The variable `{}` not found!", self.name)),
                 help_str: Some("Check the variable name!".to_string()),
+                error_ast: Some(Box::new(Clone::clone(self))),
             });
         }
     }
 
-    fn clone(&self) -> Box<dyn Ast> {
-        Box::new(GetVariableAst {
-            name: self.name.clone(),
-        })
+    fn get_position(&self) -> Option<(Arc<PathBuf>, usize)> {
+        return self.position.clone();
     }
 }
 
@@ -201,6 +234,7 @@ pub struct ExprAst {
     pub left: Box<dyn Ast>,
     pub right: Box<dyn Ast>,
     pub op: ExprOp,
+    pub position: Option<(Arc<PathBuf>, usize)>,
 }
 
 impl Ast for ExprAst {
@@ -260,6 +294,7 @@ impl Ast for ExprAst {
                     &left.name, &right.name
                 )),
                 help_str: Some("Check the variable name and type!".to_string()),
+                error_ast: Some(Box::new(Clone::clone(self))),
             });
         }
 
@@ -283,6 +318,7 @@ impl Ast for ExprAst {
                                     &left.name, &right.name
                                 )),
                                 help_str: Some("Check the variable name and type!".to_string()),
+                                error_ast: Some(Box::new(Clone::clone(self))),
                             });
                         }
                     }
@@ -298,6 +334,7 @@ impl Ast for ExprAst {
                             help_str: Some(
                                 "Check the variable name and type and operating type!".to_string(),
                             ),
+                            error_ast: Some(Box::new(Clone::clone(self))),
                         });
                     }
                 }
@@ -349,6 +386,7 @@ impl Ast for ExprAst {
                             &left.name, &right.name
                         )),
                         help_str: Some("Check the variable name and type!".to_string()),
+                        error_ast: Some(Box::new(Clone::clone(self))),
                     });
                 }
             }
@@ -364,7 +402,11 @@ impl Ast for ExprAst {
             left: self.left.clone(),
             right: self.right.clone(),
             op: self.op,
+            position: self.position.clone(),
         })
+    }
+    fn get_position(&self) -> Option<(Arc<PathBuf>, usize)> {
+        return self.position.clone();
     }
 }
 
@@ -373,6 +415,7 @@ impl Ast for ExprAst {
 pub struct CallAst {
     pub name: String,
     pub args: Vec<Box<dyn Ast>>,
+    pub position: Option<(Arc<PathBuf>, usize)>,
 }
 
 impl Ast for CallAst {
@@ -405,6 +448,7 @@ impl Ast for CallAst {
                     reason_err: None,
                     reason_str: Some(format!("The function `{}` not found!", self.name)),
                     help_str: Some("Check the function name!".to_string()),
+                    error_ast: Some(Box::new(Clone::clone(self))),
                 })
             }
         }
@@ -414,6 +458,10 @@ impl Ast for CallAst {
         Box::new(CallAst {
             name: self.name.clone(),
             args: self.args.clone(),
+            position: self.position.clone(),
         })
+    }
+    fn get_position(&self) -> Option<(Arc<PathBuf>, usize)> {
+        return self.position.clone();
     }
 }

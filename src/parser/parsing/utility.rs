@@ -16,12 +16,17 @@ pub struct TokenStream {
 }
 
 impl TokenStream {
-    pub fn get_current(&self) -> &Token {
-        &self.tokens[self.ptr]
-    }
-
     pub fn is_end(&self) -> bool {
         self.ptr >= self.tokens.len()
+    }
+
+    pub fn get_current(&self) -> &Token {
+        if self.is_end() {
+            // 获取最后一个
+            &self.tokens[self.tokens.len() - 1]
+        } else {
+            &self.tokens[self.ptr]
+        }
     }
 
     pub fn get_last(&self) -> &Token {

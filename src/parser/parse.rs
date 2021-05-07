@@ -6,8 +6,8 @@
 // Copyright (c) 2020-2021 GOSCPS 保留所有权利.
 //=========================================================
 
-use std::num::ParseIntError;
 use std::convert::TryFrom;
+use std::num::ParseIntError;
 use std::{path::PathBuf, sync::Arc};
 
 use super::{error::ParseError, preparse::LineInfo};
@@ -25,6 +25,7 @@ pub enum TokenType {
     KeywordRule,
     KeywordSet,
     KeywordSetGlobal,
+    KeywordDrop,
 
     // ( )
     Parentheses,
@@ -152,7 +153,10 @@ fn parse_token_string(chars: &[char], ptr: &mut usize) -> Result<String, String>
                         Ok(unicode) => match char::try_from(unicode) {
                             // 太差太差
                             Err(err) => {
-                                crate::tool::printer::error_line(&format!("Parsing unicode failed:{}",err.to_string()));
+                                crate::tool::printer::error_line(&format!(
+                                    "Parsing unicode failed:{}",
+                                    err.to_string()
+                                ));
                                 return Err(String::from("Parse the unicode char error!"));
                             }
 
@@ -196,7 +200,10 @@ fn parse_token_string(chars: &[char], ptr: &mut usize) -> Result<String, String>
                         Ok(unicode) => match char::try_from(unicode) {
                             // 太差太差
                             Err(err) => {
-                                crate::tool::printer::error_line(&format!("Parsing unicode failed:{}",err.to_string()));
+                                crate::tool::printer::error_line(&format!(
+                                    "Parsing unicode failed:{}",
+                                    err.to_string()
+                                ));
                                 return Err(String::from("Parse the unicode char error!"));
                             }
 
@@ -355,9 +362,11 @@ pub fn parse_token(lines: &[LineInfo]) -> Result<Vec<Token>, ParseError> {
                 } else if ident == "rule" {
                     typed = TokenType::KeywordRule;
                 } else if ident == "set" {
-                    typed = TokenType::KeywordSet
+                    typed = TokenType::KeywordSet;
                 } else if ident == "setGlobal" {
-                    typed = TokenType::KeywordSetGlobal
+                    typed = TokenType::KeywordSetGlobal;
+                } else if ident == "drop" {
+                    typed = TokenType::KeywordDrop;
                 } else {
                     typed = TokenType::Identifier(ident);
                 }

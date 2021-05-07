@@ -173,16 +173,31 @@ pub fn parse_target(tokens: &mut TokenStream) -> Result<Target, ParseError> {
     }
 
     // 读取语句
+    let body = match parse_statement(tokens) {
+        Err(err) => return Err(err),
+
+        Ok(ok) => ok,
+    };
+
+    tokens.skip_end_line();
+
+    // 读取drop
+    let drop = if !tokens.is_end() && tokens.get_current().typed == TokenType::KeywordDrop {
+        tokens.next();
+        Some(match parse_statement(tokens) {
+            Err(err) => return Err(err),
+
+            Ok(ok) => ok,
+        })
+    } else {
+        None
+    };
+
     return Ok(Target {
         name: target_name,
         depends: target_deps,
-        body: {
-            match parse_statement(tokens) {
-                Err(err) => return Err(err),
-
-                Ok(ok) => ok,
-            }
-        },
+        body,
+        drop,
     });
 }
 

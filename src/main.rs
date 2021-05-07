@@ -196,7 +196,17 @@ fn main() {
             Ok(ok) => {
                 printer::ok_line("parse file finished");
 
-                engine::engine::execute_start(ok).unwrap();
+                match engine::engine::execute_start(ok) {
+                    Err(err) => {
+                        // err.to_string();
+
+                        printer::debug_line(&format!("{:?}", err));
+
+                        panic!("Runtime error!");
+                    }
+
+                    Ok(_ok) => (),
+                }
 
                 "".to_string()
             }

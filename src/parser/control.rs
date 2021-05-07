@@ -94,6 +94,10 @@ pub fn parse_file(file_name: &String) -> Result<PFile, ParseError> {
         targets: target_list,
         global_statements: Box::new(BlockAst {
             blocks: statement_list,
+            position: Some((
+                tokens.get_current().file.clone(),
+                tokens.get_current().line_number,
+            )),
         }),
     });
 }

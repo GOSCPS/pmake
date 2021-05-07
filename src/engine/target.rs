@@ -16,6 +16,7 @@ pub struct Target {
     pub name: String,
     pub depends: Vec<String>,
     pub body: Box<dyn Ast>,
+    pub drop: Option<Box<dyn Ast>>,
 }
 
 impl PartialEq for Target {

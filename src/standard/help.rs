@@ -6,8 +6,10 @@
 // Copyright (c) 2020-2021 GOSCPS 保留所有权利.
 //=========================================================
 
+use crate::engine::{context::Context, error, variable};
+use crate::standard::help::error::RuntimeError;
 
-pub fn break(
+pub fn abort(
     args: Vec<variable::Variable>,
     _: &mut Context,
 ) -> Result<variable::Variable, error::RuntimeError> {
@@ -16,5 +18,6 @@ pub fn break(
         reason_err: None,
         reason_str: Some("Manual trigger -> break() function.".to_string()),
         help_str: None,
+        error_ast: None,
     })
 }
