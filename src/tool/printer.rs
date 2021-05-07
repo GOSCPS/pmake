@@ -7,6 +7,7 @@
 //=========================================================
 
 use colored::*;
+use std::io::{stdout, stderr, Write};
 
 // Print Error
 /*pub fn error(msg : String){
@@ -32,12 +33,17 @@ pub fn help(msg : String){
 
 // Print Error
 pub fn error_line(msg: &str) {
-    eprintln!("{} {}:{}", "pmake".bold(), "error".bright_red().bold(), msg);
+    let handle = stderr();
+    let lock = handle.lock();
+    write!(lock, "{} {}:{}", "pmake".bold(), "error".bright_red().bold(), msg);
 }
 
 // Print Warning
 pub fn warn_line(msg: &str) {
-    eprintln!(
+    let handle = stderr();
+    let lock = handle.lock();
+    write!(
+        lock,
         "{} {}:{}",
         "pmake".bold(),
         "warn ".bright_yellow().bold(),
@@ -47,7 +53,10 @@ pub fn warn_line(msg: &str) {
 
 // Print Ok
 pub fn ok_line(msg: &str) {
-    println!(
+    let handle = stdout();
+    let lock = handle.lock();
+    write!(
+        lock,
         "{} {}:{}",
         "pmake".bold(),
         "okay ".bright_green().bold(),
@@ -57,7 +66,10 @@ pub fn ok_line(msg: &str) {
 
 // Print Help
 pub fn help_line(msg: &str) {
-    println!(
+    let handle = stdout();
+    let lock = handle.lock();
+    write!(
+        lock,
         "{} {}:{}",
         "pmake".bold(),
         "help ".bright_blue().bold(),
@@ -69,7 +81,10 @@ pub fn help_line(msg: &str) {
 pub fn debug_line(_msg: &str) {
     #[cfg(debug_assertions)]
     {
-        println!(
+        let handle = stderr();
+        let lock = handle.lock();
+        write!(
+            lock,
             "{} {}:{}",
             "pmake".bold(),
             "debug".bright_purple().bold(),
