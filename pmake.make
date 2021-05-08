@@ -1,7 +1,8 @@
 
 target default{
-        abort()
+        try abort()
+        println("You should see this!")
 }
 drop{
-        println("Hello drop!" + 1)
+        println("You shouldn't see this!")
 }

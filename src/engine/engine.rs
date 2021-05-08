@@ -131,9 +131,13 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
         crate::algorithm::topological::target_topological(&aims_ref, &temp);
 
     // 多线程执行
+    // 任务发送通道
     let (sender, receiver): (Sender<Arc<Target>>, Receiver<Arc<Target>>) = mpsc::channel();
+    // 错误发送通道
     let (err_sender, err_receiver): (Sender<Arc<RuntimeError>>, Receiver<Arc<RuntimeError>>) =
         mpsc::channel();
+
+    // 线程列表
     let mut thread_list = Vec::new();
 
     let task_receiver: Arc<Mutex<Receiver<Arc<Target>>>> = Arc::from(Mutex::new(receiver));
@@ -171,7 +175,8 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
                                             reason_token: None,
                                             reason_err: None,
                                             reason_str: Some(format!(
-                                                "The receiver recv:{}",
+                                                "{}:The receiver recv:{}",
+                                                thread::current().name().unwrap_or("UNKNOWN"),
                                                 err.to_string()
                                             )),
                                             help_str: None,
@@ -181,7 +186,8 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
 
                                     // 打印信息
                                     crate::tool::printer::debug_line(&format!(
-                                        "The receiver recv:{}",
+                                        "{}:The receiver recv:{}",
+                                        thread::current().name().unwrap_or("UNKNOWN"),
                                         err.to_string()
                                     ));
 
@@ -202,10 +208,10 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
                                         // 翻车
                                         Err(err) => {
                                             // 打印一些错误
-                                            err.to_string();
+                                            err.show_to_console();
 
                                             crate::tool::printer::debug_line(&format!(
-                                                "{}:{:?}",
+                                                "{}:{}",
                                                 thread::current().name().unwrap_or("UNKNOWN"),
                                                 err
                                             ));
@@ -231,10 +237,10 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
                                                 match drops.execute(&mut context) {
                                                     Err(drop_err) => {
                                                         // 打印信息 & 发送错误
-                                                        drop_err.to_string();
+                                                        drop_err.show_to_console();
 
                                                         crate::tool::printer::debug_line(&format!(
-                                                            "{}:{:?}",
+                                                            "{}:{:}",
                                                             thread::current()
                                                                 .name()
                                                                 .unwrap_or("UNKNOWN"),

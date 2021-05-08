@@ -198,9 +198,8 @@ fn main() {
 
                 match engine::engine::execute_start(ok) {
                     Err(err) => {
-                        // err.to_string();
 
-                        printer::debug_line(&format!("{:?}", err));
+                        printer::debug_line(&format!("{}", err));
 
                         panic!("Runtime error!");
                     }

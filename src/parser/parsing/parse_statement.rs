@@ -6,6 +6,8 @@
 // Copyright (c) 2020-2021 GOSCPS 保留所有权利.
 //=========================================================
 
+use crate::engine::ast::ast::TryAst;
+
 // 解析赋值语句
 pub fn parse_statement_assignment(tokens: &mut TokenStream)
 -> Result<Box<dyn Ast>, ParseError>{
@@ -146,6 +148,19 @@ pub fn parse_statement(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseEr
     tokens.get_current().typed == TokenType::KeywordSetGlobal{
         return parse_statement_assignment(tokens);
     }
+
+    // try语句
+    else if tokens.get_current().typed == TokenType::KeywordTry{
+        tokens.next();
+        return Ok(Box::new(TryAst{
+                aim : match parse_statement(tokens){
+                    Err(err) => return Err(err),
+
+                    Ok(ok) => ok
+                },
+                position : Some((tokens.get_current().file.clone(),tokens.get_current().line_number))
+            }));
+        }
 
     // 表达式
     else {

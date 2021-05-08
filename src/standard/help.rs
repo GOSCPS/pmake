@@ -10,13 +10,13 @@ use crate::engine::{context::Context, error, variable};
 use crate::standard::help::error::RuntimeError;
 
 pub fn abort(
-    args: Vec<variable::Variable>,
+    _args: Vec<variable::Variable>,
     _: &mut Context,
 ) -> Result<variable::Variable, error::RuntimeError> {
     Err(RuntimeError {
         reason_token: None,
         reason_err: None,
-        reason_str: Some("Manual trigger -> break() function.".to_string()),
+        reason_str: Some("Manual trigger -> abort() function.".to_string()),
         help_str: None,
         error_ast: None,
     })

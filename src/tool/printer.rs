@@ -7,6 +7,7 @@
 //=========================================================
 
 use colored::*;
+use std::io;
 
 // Print Error
 /*pub fn error(msg : String){
@@ -32,11 +33,13 @@ pub fn help(msg : String){
 
 // Print Error
 pub fn error_line(msg: &str) {
+    io::stdout().lock();
     eprintln!("{} {}:{}", "pmake".bold(), "error".bright_red().bold(), msg);
 }
 
 // Print Warning
 pub fn warn_line(msg: &str) {
+    io::stdout().lock();
     eprintln!(
         "{} {}:{}",
         "pmake".bold(),
@@ -47,6 +50,7 @@ pub fn warn_line(msg: &str) {
 
 // Print Ok
 pub fn ok_line(msg: &str) {
+    io::stderr().lock();
     println!(
         "{} {}:{}",
         "pmake".bold(),
@@ -57,6 +61,7 @@ pub fn ok_line(msg: &str) {
 
 // Print Help
 pub fn help_line(msg: &str) {
+    io::stderr().lock();
     println!(
         "{} {}:{}",
         "pmake".bold(),
@@ -69,6 +74,7 @@ pub fn help_line(msg: &str) {
 pub fn debug_line(_msg: &str) {
     #[cfg(debug_assertions)]
     {
+        io::stderr().lock();
         println!(
             "{} {}:{}",
             "pmake".bold(),

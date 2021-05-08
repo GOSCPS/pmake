@@ -12,7 +12,10 @@ use crate::engine::{
     variable::{self, Variable, VariableType},
 };
 use std::path::PathBuf;
+use std::panic;
+use std::panic::AssertUnwindSafe;
 use std::sync::Arc;
+use std::thread;
 
 // 抽象语法树
 pub trait Ast: Send + Sync {
@@ -458,6 +461,66 @@ impl Ast for CallAst {
         Box::new(CallAst {
             name: self.name.clone(),
             args: self.args.clone(),
+            position: self.position.clone(),
+        })
+    }
+    fn get_position(&self) -> Option<(Arc<PathBuf>, usize)> {
+        return self.position.clone();
+    }
+}
+
+// try ast
+#[derive(Clone)]
+pub struct TryAst {
+    pub aim: Box<dyn Ast>,
+    pub position: Option<(Arc<PathBuf>, usize)>,
+}
+
+impl Ast for TryAst {
+    fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
+        let wrapper = AssertUnwindSafe(&self);
+
+        let result = panic::catch_unwind(move || {
+            match wrapper.aim.execute(&mut Context::new()){
+                Err(err) => Err(err),
+
+                Ok(ok) => Ok(ok)
+            }
+        });
+
+        if result.is_err(){
+            crate::tool::printer::debug_line(&format!(
+                "{}:Try err - panic!",
+            thread::current().name().unwrap_or("UNKNOWN")));
+
+            return Ok(
+                Variable::none_value()
+            );
+        }
+        else if let Some(some) = result.ok(){
+            return match some{
+                Err(err) => {
+                    crate::tool::printer::debug_line(&format!("{}:Try err:{}",
+                    thread::current().name().unwrap_or("UNKNOWN"),
+                    err));
+
+                    Ok(
+                    Variable::none_value()
+                )
+            },
+
+                Ok(ok) => Ok(ok)
+            }
+        }
+        // 不可能
+        else{
+            unreachable!("Unreachable:RESULT isn't err and ok!");
+        }
+    }
+
+    fn clone(&self) -> Box<dyn Ast> {
+        Box::new(TryAst {
+            aim: self.aim.clone(),
             position: self.position.clone(),
         })
     }
