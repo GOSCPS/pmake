@@ -35,7 +35,7 @@ lazy_static! {
 
     // 构建文件名称
     pub static ref BUILD_FILE_NAME : Mutex<String>
-        = Mutex::new(String::from("pmake.make"));
+        = Mutex::new(String::from("remake.make"));
 
     // 构建线程名称
     pub static ref BUILD_THREAD_COUNT : Mutex<u64>
@@ -58,7 +58,7 @@ fn print_help() {
     println!("\t{}\t\t\t{}", "-version", "Print version then exit.");
     println!(
         "\t{}\t\t{}",
-        "-file=FileName", "Set the build file name.Default `pmake.make`."
+        "-file=FileName", "Set the build file name.Default `remake.make`."
     );
     println!(
         "\t{}\t{}",
@@ -166,8 +166,8 @@ fn main() {
 
         // 打印标志
         if is_print_logo {
-            println!("pmake version {}", env!("CARGO_PKG_VERSION"));
-            println!("pmake made by GOSCPS");
+            println!("remake version {}", env!("CARGO_PKG_VERSION"));
+            println!("remake made by GOSCPS");
         }
     }
 

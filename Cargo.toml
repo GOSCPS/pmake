@@ -1,9 +1,9 @@
 [package]
-name = "pmake"
+name = "remake"
 version = "0.1.0"
 edition = "2018"
 authors = ["GOSCPS Team <goscps@foxmail.com>"]
-homepage = "https://github.com/GOSCPS/pmake"
+homepage = "https://github.com/GOSCPS/remake"
 license = "GOSCPS License v3"
 
 [dependencies]

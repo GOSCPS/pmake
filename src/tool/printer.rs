@@ -34,7 +34,7 @@ pub fn help(msg : String){
 // Print Error
 pub fn error_line(msg: &str) {
     io::stdout().lock();
-    eprintln!("{} {}:{}", "pmake".bold(), "error".bright_red().bold(), msg);
+    eprintln!("{} {}:{}", "remake".bold(), "error".bright_red().bold(), msg);
 }
 
 // Print Warning
@@ -42,7 +42,7 @@ pub fn warn_line(msg: &str) {
     io::stdout().lock();
     eprintln!(
         "{} {}:{}",
-        "pmake".bold(),
+        "remake".bold(),
         "warn ".bright_yellow().bold(),
         msg
     );
@@ -53,7 +53,7 @@ pub fn ok_line(msg: &str) {
     io::stderr().lock();
     println!(
         "{} {}:{}",
-        "pmake".bold(),
+        "remake".bold(),
         "okay ".bright_green().bold(),
         &msg
     );
@@ -64,7 +64,7 @@ pub fn help_line(msg: &str) {
     io::stderr().lock();
     println!(
         "{} {}:{}",
-        "pmake".bold(),
+        "remake".bold(),
         "help ".bright_blue().bold(),
         msg
     );
@@ -77,7 +77,7 @@ pub fn debug_line(_msg: &str) {
         io::stderr().lock();
         println!(
             "{} {}:{}",
-            "pmake".bold(),
+            "remake".bold(),
             "debug".bright_purple().bold(),
             _msg
         );
