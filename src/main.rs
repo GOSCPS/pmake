@@ -43,11 +43,11 @@ lazy_static! {
 }
 
 pub mod loglevels {
-    pub const DEBUG: u64 = 0;
-    pub const TRACE: u64 = 1;
-    pub const INFO: u64 = 2;
-    pub const WARN: u64 = 4;
-    pub const ERROR: u64 = 5;
+    pub const DEBUG: u32 = 0;
+    pub const TRACE: u32 = 1;
+    pub const INFO: u32 = 2;
+    pub const WARN: u32 = 4;
+    pub const ERROR: u32 = 5;
 }
 
 pub static LOG_LEVEL: AtomicU32 = AtomicU32::new(loglevels::DEBUG);
