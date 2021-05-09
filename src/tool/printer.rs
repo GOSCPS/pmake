@@ -27,7 +27,7 @@ pub fn warn_line(msg: &str) {
     eprintln!(
         "{} {}:{}",
         "remake".bold(),
-        "warn ".bright_yellow().dimmed(),
+        "warn ".bright_yellow().bold(),
         msg
     );
 }
@@ -38,7 +38,7 @@ pub fn trace_line(msg: &str) {
     println!(
         "{} {}:{}",
         "remake".bold(),
-        "trace".white().bold(),
+        "trace".white().dimmed(),
         msg
     );
 }
