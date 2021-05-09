@@ -7,7 +7,16 @@
 //=========================================================
 
 use colored::*;
-use std::io;
+use std::{io, sync::atomic::Ordering::Relaxed};
+use crate::{LOG_LEVEL, loglevels::*};
+
+macro_rules! assert_loglevel {
+    ($a: expr) => {
+        if LOG_LEVEL.load(Relaxed) > $a {
+            return;
+        }
+    }
+}
 
 // 写
 pub fn write(msg: &str) {
@@ -17,6 +26,7 @@ pub fn write(msg: &str) {
 
 // Print Error
 pub fn error_line(msg: &str) {
+    assert_loglevel!(ERROR);
     io::stdout().lock();
     eprintln!(
         "{} {}:{}",
@@ -28,6 +38,7 @@ pub fn error_line(msg: &str) {
 
 // Print Warning
 pub fn warn_line(msg: &str) {
+    assert_loglevel!(WARN);
     io::stdout().lock();
     eprintln!(
         "{} {}:{}",
@@ -39,12 +50,14 @@ pub fn warn_line(msg: &str) {
 
 // Print Trace
 pub fn trace_line(msg: &str) {
+    assert_loglevel!(TRACE);
     io::stderr().lock();
     println!("{} {}:{}", "remake".bold(), "trace".white().dimmed(), msg);
 }
 
 // Print Ok
 pub fn ok_line(msg: &str) {
+    assert_loglevel!(INFO);
     io::stderr().lock();
     println!(
         "{} {}:{}",
@@ -56,6 +69,7 @@ pub fn ok_line(msg: &str) {
 
 // Print Help
 pub fn help_line(msg: &str) {
+    assert_loglevel!(ERROR);
     io::stderr().lock();
     println!(
         "{} {}:{}",
@@ -69,6 +83,7 @@ pub fn help_line(msg: &str) {
 pub fn debug_line(_msg: &str) {
     #[cfg(debug_assertions)]
     {
+        assert_loglevel!(DEBUG);
         io::stderr().lock();
         println!(
             "{} {}:{}",
