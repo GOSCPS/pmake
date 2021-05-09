@@ -20,5 +20,5 @@ pub fn register_standard_lib() {
     reg("eprint", print::eprint);
     reg("eprintln", print::eprintln);
     reg("abort", help::abort);
-    reg("sleep",help::sleep);
+    reg("sleep", help::sleep);
 }

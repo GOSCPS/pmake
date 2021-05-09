@@ -372,12 +372,11 @@ pub fn parse_token(lines: &[LineInfo]) -> Result<Vec<Token>, ParseError> {
                     typed = TokenType::KeywordSetGlobal;
                 } else if ident == "drop" {
                     typed = TokenType::KeywordDrop;
-                } else if ident == "try"{
+                } else if ident == "try" {
                     typed = TokenType::KeywordTry;
-                } else if ident == "sh"{
+                } else if ident == "sh" {
                     typed = TokenType::KeywordSh;
-                }
-                else {
+                } else {
                     typed = TokenType::Identifier(ident);
                 }
 

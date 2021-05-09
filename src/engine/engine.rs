@@ -281,7 +281,6 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
 
     // 发布任务
     loop {
-
         // 检查错误
         match err_receiver.try_recv() {
             // 有错误
@@ -294,10 +293,7 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
                 }
 
                 // 返回错误
-                crate::tool::printer::debug_line(&format!(
-                    "The err receiver recv:{:?}",
-                    ok
-                ));
+                crate::tool::printer::debug_line(&format!("The err receiver recv:{:?}", ok));
 
                 return Err(RuntimeError {
                     reason_token: None,
@@ -354,7 +350,7 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
 
                 return Ok(());
             }
-            Some(some) => some
+            Some(some) => some,
         };
 
         // 检查依赖

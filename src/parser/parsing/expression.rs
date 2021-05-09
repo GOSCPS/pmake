@@ -12,9 +12,9 @@ use crate::engine::{
     variable::Variable,
     variable::VariableType,
 };
-use crate::parser::parsing::parsing::parse_statement;
 use crate::parser::error::ParseError;
 use crate::parser::parse::TokenType;
+use crate::parser::parsing::parsing::parse_statement;
 use crate::parser::parsing::utility::TokenStream;
 use std::convert::TryFrom;
 use std::sync::Arc;
@@ -330,31 +330,25 @@ fn parse_expression_top(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseE
         }
     }
     // 检查语句
-    else if let TokenType::Dollar = &tokens.get_current().typed{
+    else if let TokenType::Dollar = &tokens.get_current().typed {
         tokens.next();
 
         // 检查(
-        if tokens.is_end() || tokens.get_current().typed != TokenType::Parentheses{
-            return Err(tokens.generate_error(
-                Some("Expect `(` !".to_string()),
-                None,
-            ));
+        if tokens.is_end() || tokens.get_current().typed != TokenType::Parentheses {
+            return Err(tokens.generate_error(Some("Expect `(` !".to_string()), None));
         }
         tokens.next();
 
         // 获取语句
         let statement = parse_statement(tokens);
 
-        match statement{
+        match statement {
             Err(err) => return Err(err),
 
-            Ok(ok) =>{
+            Ok(ok) => {
                 // 检查)
-                if tokens.is_end() || tokens.get_current().typed != TokenType::ParenthesesEnd{
-                    return Err(tokens.generate_error(
-                        Some("Expect `)` !".to_string()),
-                        None,
-                    ));
+                if tokens.is_end() || tokens.get_current().typed != TokenType::ParenthesesEnd {
+                    return Err(tokens.generate_error(Some("Expect `)` !".to_string()), None));
                 }
                 tokens.next();
 
@@ -417,25 +411,20 @@ pub fn parse_expression(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseE
 }
 
 // 判断是否是语句
-pub fn is_expression(tokens: &mut TokenStream) -> bool{
-    if tokens.is_end(){
+pub fn is_expression(tokens: &mut TokenStream) -> bool {
+    if tokens.is_end() {
         return false;
-    }
-    else if tokens.get_current().typed == TokenType::Parentheses
-    || tokens.get_current().typed == TokenType::Dollar
+    } else if tokens.get_current().typed == TokenType::Parentheses
+        || tokens.get_current().typed == TokenType::Dollar
     {
         return true;
-    }
-    else if let TokenType::Identifier(_) = tokens.get_current().typed{
+    } else if let TokenType::Identifier(_) = tokens.get_current().typed {
         return true;
-    }
-    else if let TokenType::Number(_) = tokens.get_current().typed{
+    } else if let TokenType::Number(_) = tokens.get_current().typed {
         return true;
-    }
-    else if let TokenType::String(_) = tokens.get_current().typed{
+    } else if let TokenType::String(_) = tokens.get_current().typed {
         return true;
-    }
-    else{
+    } else {
         return false;
     }
 }

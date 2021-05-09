@@ -11,15 +11,15 @@ use crate::engine::{
     error::{self, RuntimeError},
     variable::{self, Variable, VariableType},
 };
-use std::path::PathBuf;
+use std::collections::VecDeque;
+use std::io::Read;
 use std::panic;
 use std::panic::AssertUnwindSafe;
-use std::collections::VecDeque;
-use std::sync::Arc;
-use std::thread;
-use std::io::Read;
+use std::path::PathBuf;
 use std::process;
 use std::process::Stdio;
+use std::sync::Arc;
+use std::thread;
 
 // 抽象语法树
 pub trait Ast: Send + Sync {
@@ -484,40 +484,36 @@ impl Ast for TryAst {
     fn execute(&self, _context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
         let wrapper = AssertUnwindSafe(&self);
 
-        let result = panic::catch_unwind(move || {
-            match wrapper.aim.execute(&mut Context::new()){
-                Err(err) => Err(err),
+        let result = panic::catch_unwind(move || match wrapper.aim.execute(&mut Context::new()) {
+            Err(err) => Err(err),
 
-                Ok(ok) => Ok(ok)
-            }
+            Ok(ok) => Ok(ok),
         });
 
-        if result.is_err(){
+        if result.is_err() {
             crate::tool::printer::debug_line(&format!(
                 "{}:Try err - panic!",
-            thread::current().name().unwrap_or("UNKNOWN")));
+                thread::current().name().unwrap_or("UNKNOWN")
+            ));
 
-            return Ok(
-                Variable::none_value()
-            );
-        }
-        else if let Some(some) = result.ok(){
-            return match some{
+            return Ok(Variable::none_value());
+        } else if let Some(some) = result.ok() {
+            return match some {
                 Err(err) => {
-                    crate::tool::printer::debug_line(&format!("{}:Try err:{}",
-                    thread::current().name().unwrap_or("UNKNOWN"),
-                    err));
+                    crate::tool::printer::debug_line(&format!(
+                        "{}:Try err:{}",
+                        thread::current().name().unwrap_or("UNKNOWN"),
+                        err
+                    ));
 
-                    Ok(
-                    Variable::none_value()
-                )
-            },
+                    Ok(Variable::none_value())
+                }
 
-                Ok(ok) => Ok(ok)
-            }
+                Ok(ok) => Ok(ok),
+            };
         }
         // 不可能
-        else{
+        else {
             unreachable!("Unreachable:RESULT isn't err and ok!");
         }
     }
@@ -543,18 +539,20 @@ pub struct ShAst {
 impl Ast for ShAst {
     fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
         // 获取参数
-        let mut variable : VecDeque<Variable> = VecDeque::new();
+        let mut variable: VecDeque<Variable> = VecDeque::new();
 
-        for arg in &self.args{
-            match arg.execute(context){
+        for arg in &self.args {
+            match arg.execute(context) {
                 Err(err) => return Err(err),
 
-                Ok(ok) => variable.push_back(ok)
+                Ok(ok) => variable.push_back(ok),
             }
         }
 
-        if variable.len() == 0{
-            return Err(RuntimeError::create_error("Need one arg to as program name as least!"));
+        if variable.len() == 0 {
+            return Err(RuntimeError::create_error(
+                "Need one arg to as program name as least!",
+            ));
         }
 
         // 命令
@@ -565,23 +563,23 @@ impl Ast for ShAst {
         cmd_str.push_str(&temp.to_string());
         cmd_str.push(' ');
 
-        let mut cmd = process::Command::new(
-            temp.to_string());
+        let mut cmd = process::Command::new(temp.to_string());
 
-        for arg in variable.into_iter(){
+        for arg in variable.into_iter() {
             cmd_str.push_str(&arg.to_string());
             cmd_str.push(' ');
             cmd.arg(arg.to_string());
         }
 
         // 输出命令
-        crate::tool::printer::trace_line(&format!("{}:{}",
-        thread::current().name().unwrap_or("UNKNOWN"),
-        cmd_str));
+        crate::tool::printer::trace_line(&format!(
+            "{}:{}",
+            thread::current().name().unwrap_or("UNKNOWN"),
+            cmd_str
+        ));
 
         // 执行
-        return match cmd
-        .stdout(Stdio::piped()).spawn(){
+        return match cmd.stdout(Stdio::piped()).spawn() {
             Err(err) => Err(RuntimeError::create_error(&err.to_string())),
 
             Ok(ok) => {
@@ -592,24 +590,25 @@ impl Ast for ShAst {
                 ok.stdout.unwrap().read_to_string(&mut output);
 
                 // 输出output
-                if output.ends_with('\n'){
-                    print!("{}",output);
-                }
-                else{
-                    println!("{}",output);
+                if output.ends_with('\n') {
+                    print!("{}", output);
+                } else {
+                    println!("{}", output);
                 }
 
                 // 非0
-                if code != 0{
-                    return Err(RuntimeError::create_error("The program return code isn't zero!"));
+                if code != 0 {
+                    return Err(RuntimeError::create_error(
+                        "The program return code isn't zero!",
+                    ));
                 }
 
-                Ok(Variable{
-                name : Arc::from("# ShAst program output #"),
-                typed : VariableType::Str(output)
-            })
-        }
-        }
+                Ok(Variable {
+                    name: Arc::from("# ShAst program output #"),
+                    typed: VariableType::Str(output),
+                })
+            }
+        };
     }
 
     fn clone(&self) -> Box<dyn Ast> {

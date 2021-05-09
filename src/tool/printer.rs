@@ -10,15 +10,20 @@ use colored::*;
 use std::io;
 
 // 写
-pub fn write(msg : &str){
+pub fn write(msg: &str) {
     io::stderr().lock();
-    print!("{}",msg);
+    print!("{}", msg);
 }
 
 // Print Error
 pub fn error_line(msg: &str) {
-        io::stdout().lock();
-        eprintln!("{} {}:{}", "remake".bold(), "error".bright_red().bold(), msg);
+    io::stdout().lock();
+    eprintln!(
+        "{} {}:{}",
+        "remake".bold(),
+        "error".bright_red().bold(),
+        msg
+    );
 }
 
 // Print Warning
@@ -35,12 +40,7 @@ pub fn warn_line(msg: &str) {
 // Print Trace
 pub fn trace_line(msg: &str) {
     io::stderr().lock();
-    println!(
-        "{} {}:{}",
-        "remake".bold(),
-        "trace".white().dimmed(),
-        msg
-    );
+    println!("{} {}:{}", "remake".bold(), "trace".white().dimmed(), msg);
 }
 
 // Print Ok

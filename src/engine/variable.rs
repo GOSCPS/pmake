@@ -32,15 +32,15 @@ impl Variable {
         }
     }
 
-    pub fn to_string(&self) -> String{
-        return match &self.typed{
+    pub fn to_string(&self) -> String {
+        return match &self.typed {
             VariableType::None => "None".to_string(),
 
             VariableType::Str(strs) => strs.to_string(),
 
             VariableType::Number(num) => num.to_string(),
 
-            VariableType::Boolean(boolean) => boolean.to_string()
+            VariableType::Boolean(boolean) => boolean.to_string(),
         };
     }
 }

@@ -9,8 +9,8 @@
 use crate::engine::ast::ast::Ast;
 use crate::parser::parse::Token;
 use std::error::Error;
-use std::thread;
 use std::fmt;
+use std::thread;
 
 //解析错误
 // #[derive(Debug)]
@@ -24,25 +24,43 @@ pub struct RuntimeError {
 
 // 实现Display的trait
 impl std::fmt::Display for RuntimeError {
-    fn fmt(&self, f : &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if let Some(some) = &self.reason_token {
-            write!(f,"{}:{:?}",thread::current().name().unwrap_or("UNKNOWN"),some)?;
+            write!(
+                f,
+                "{}:{:?}",
+                thread::current().name().unwrap_or("UNKNOWN"),
+                some
+            )?;
         }
 
         if let Some(some) = &self.reason_str {
-            write!(f,"{}:{}",thread::current().name().unwrap_or("UNKNOWN"),some)?;
+            write!(
+                f,
+                "{}:{}",
+                thread::current().name().unwrap_or("UNKNOWN"),
+                some
+            )?;
         }
 
         if let Some(some) = &self.help_str {
-            write!(f,"{}:{}",thread::current().name().unwrap_or("UNKNOWN"),
-            some)?;
+            write!(
+                f,
+                "{}:{}",
+                thread::current().name().unwrap_or("UNKNOWN"),
+                some
+            )?;
         }
 
         if let Some(some) = &self.error_ast {
             if let Some(pos) = (*some).get_position().clone() {
-                write!(f,"{}:At `{:?}` Lines {}",
-                thread::current().name().unwrap_or("UNKNOWN"),
-                pos.0, pos.1)?;
+                write!(
+                    f,
+                    "{}:At `{:?}` Lines {}",
+                    thread::current().name().unwrap_or("UNKNOWN"),
+                    pos.0,
+                    pos.1
+                )?;
             }
         }
 
@@ -72,29 +90,44 @@ impl fmt::Debug for RuntimeError {
 
 impl RuntimeError {
     // 输出错误到stdout/stderr
-    pub fn show_to_console(&self){
+    pub fn show_to_console(&self) {
         if let Some(some) = &self.reason_token {
-            crate::tool::printer::error_line(&format!("{}:{:?}",thread::current().name().unwrap_or("UNKNOWN"),some));
+            crate::tool::printer::error_line(&format!(
+                "{}:{:?}",
+                thread::current().name().unwrap_or("UNKNOWN"),
+                some
+            ));
         }
 
         if let Some(some) = &self.reason_str {
-            crate::tool::printer::error_line(&format!("{}:{}",thread::current().name().unwrap_or("UNKNOWN"),some));
+            crate::tool::printer::error_line(&format!(
+                "{}:{}",
+                thread::current().name().unwrap_or("UNKNOWN"),
+                some
+            ));
         }
 
         if let Some(some) = &self.help_str {
-            crate::tool::printer::help_line(&format!("{}:{}",thread::current().name().unwrap_or("UNKNOWN"),some));
+            crate::tool::printer::help_line(&format!(
+                "{}:{}",
+                thread::current().name().unwrap_or("UNKNOWN"),
+                some
+            ));
         }
 
         if let Some(some) = &self.error_ast {
             if let Some(pos) = (*some).get_position().clone() {
-                crate::tool::printer::error_line(&format!("{}:At `{:?}` Lines {}",
-                thread::current().name().unwrap_or("UNKNOWN"),
-                pos.0, pos.1));
+                crate::tool::printer::error_line(&format!(
+                    "{}:At `{:?}` Lines {}",
+                    thread::current().name().unwrap_or("UNKNOWN"),
+                    pos.0,
+                    pos.1
+                ));
             }
         }
     }
 
-    pub fn create_error(err : &str) -> RuntimeError{
+    pub fn create_error(err: &str) -> RuntimeError {
         RuntimeError {
             reason_token: None,
             reason_err: None,

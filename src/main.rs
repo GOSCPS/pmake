@@ -201,7 +201,6 @@ fn main() {
 
                 match engine::engine::execute_start(ok) {
                     Err(err) => {
-
                         printer::debug_line(&format!("{}", err));
 
                         panic!("Runtime error!");
