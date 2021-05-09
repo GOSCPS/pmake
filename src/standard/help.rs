@@ -9,6 +9,7 @@
 use crate::engine::{context::Context,variable,ast::ast::AstResult};
 use std::convert::TryInto;
 use std::thread;
+use std::sync::Arc;
 use std::time::Duration;
 use crate::engine::error::RuntimeError;
 
