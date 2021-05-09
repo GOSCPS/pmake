@@ -21,4 +21,7 @@ pub fn register_standard_lib() {
     reg("eprintln", print::eprintln);
     reg("abort", help::abort);
     reg("sleep", help::sleep);
+    reg("isHostWindows", help::is_win);
+    reg("isHostUnix", help::is_unix);
+    reg("isHostLinux", help::is_linux);
 }

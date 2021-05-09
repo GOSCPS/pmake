@@ -9,6 +9,7 @@
 use crate::engine::{context::Context,variable,ast::ast::AstResult};
 use std::convert::TryInto;
 use std::thread;
+use std::sync::Arc;
 use std::time::Duration;
 use crate::engine::error::RuntimeError;
 
@@ -49,4 +50,35 @@ pub fn sleep(
     } else {
         return AstResult::Err(RuntimeError::create_error("sleep():Need one number!"));
     }
+}
+
+fn temp_bool(val: bool) -> variable::Variable {
+    variable::Variable {
+        typed: variable::VariableType::Boolean(val),
+        name: Arc::from("# Temp Boolean #"),
+    }
+}
+
+// Detect if host OS is Unix-like.
+pub fn is_unix(
+    _: Vec<variable::Variable>,
+    _: &mut Context,
+) -> AstResult {
+    AstResult::Ok(temp_bool(cfg!(unix)))
+}
+
+// Detect if host OS is Microsoft Windows.
+pub fn is_win(
+    _: Vec<variable::Variable>,
+    _: &mut Context,
+) -> AstResult {
+    AstResult::Ok(temp_bool(cfg!(windows)))
+}
+
+// Detect if host OS is Linux.
+pub fn is_linux(
+    _: Vec<variable::Variable>,
+    _: &mut Context,
+) -> AstResult {
+    AstResult::Ok(temp_bool(cfg!(target_os = "linux")))
 }
