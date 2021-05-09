@@ -2,7 +2,7 @@
 target default{
         try abort()
 
-        exec "echo" $(exec "echo" "Hello World")
+        println("Current total *.rs line:" + $(exec "sh" "-c" "find src/ -name *.rs |xargs cat|wc -l"))
 }
 drop{
         println("You shouldn't see this!")
