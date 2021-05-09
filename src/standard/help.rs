@@ -51,12 +51,19 @@ pub fn sleep(
     }
 }
 
+fn temp_bool(val: bool) -> variable::Variable {
+    variable::Variable {
+        typed: variable::VariableType::Boolean(val),
+        name: Arc::from("# Temp Boolean #");
+    }
+}
+
 // Detect if host OS is Unix-like.
 pub fn is_unix(
     _: Vec<variable::Variable>,
     _: &mut Context,
 ) -> AstResult {
-    AstResult::Ok(variable::Variable::Boolean(cfg!(unix)))
+    AstResult::Ok(temp_bool(cfg!(unix)))
 }
 
 // Detect if host OS is Microsoft Windows.
@@ -64,7 +71,7 @@ pub fn is_win(
     _: Vec<variable::Variable>,
     _: &mut Context,
 ) -> AstResult {
-    AstResult::Ok(variable::Variable::Boolean(cfg!(windows)))
+    AstResult::Ok(temp_bool(cfg!(windows)))
 }
 
 // Detect if host OS is Linux.
@@ -72,5 +79,5 @@ pub fn is_linux(
     _: Vec<variable::Variable>,
     _: &mut Context,
 ) -> AstResult {
-    AstResult::Ok(variable::Variable::Boolean(cfg!(target_os = "linux")))
+    AstResult::Ok(temp_bool(cfg!(target_os = "linux")))
 }
