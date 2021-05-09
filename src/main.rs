@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use std::env;
 use std::panic;
 use std::process;
-use std::sync::Mutex;
+use std::sync::{Mutex, atomic::{AtomicU32, Ordering::Relaxed}};
 use std::time::Instant;
 
 mod algorithm;
@@ -42,6 +42,16 @@ lazy_static! {
         = Mutex::new(1_u64);
 }
 
+pub mod loglevels {
+    pub const DEBUG: u64 = 0;
+    pub const TRACE: u64 = 1;
+    pub const INFO: u64 = 2;
+    pub const WARN: u64 = 4;
+    pub const ERROR: u64 = 5;
+}
+
+pub static LOG_LEVEL: AtomicU32 = AtomicU32::new(loglevels::DEBUG);
+
 // 打印帮助
 fn print_help() {
     let args: Vec<String> = env::args().collect();
@@ -68,6 +78,7 @@ fn print_help() {
         "\t{}\t{}",
         "-thread=[Value]", "Set the thread count.Default value is `1`."
     );
+    println!("\t{}\t{}", "-logLevel=[Level]", "Set the log level.");
 }
 
 // 打印信息
@@ -155,6 +166,16 @@ fn main() {
             // 视为target
             else if !arg.starts_with('-') {
                 TARGET_LIST.lock().unwrap().push(String::from(arg));
+            }
+            else if let Some(msg) = arg.strip_prefix("-logLevel=") {
+                LOG_LEVEL.store(match msg {
+                    "debug" => loglevels::DEBUG,
+                    "trace" => loglevels::TRACE,
+                    "info" => loglevels::INFO,
+                    "warn" => loglevels::WARN,
+                    "error" => loglevels::ERROR,
+                    _ => panic!("Error: Not a valid log level!"),
+                }, Relaxed);
             }
             // 未知参数
             else {
