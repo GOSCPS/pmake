@@ -31,6 +31,7 @@ lazy_static! {
     pub static ref GLOBAL_RULE_LIST
     : Mutex<HashMap<String,Rule>> = Mutex::new(HashMap::new());
 
+    // 完成列表
     pub static ref FINISHED_TARGET_LIST
     : Mutex<Vec<String>> = Mutex::new(Vec::new());
 }
@@ -280,6 +281,7 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
 
     // 发布任务
     loop {
+
         // 检查错误
         match err_receiver.try_recv() {
             // 有错误
@@ -291,6 +293,7 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
                     t.join().unwrap();
                 }
 
+                // 返回错误
                 crate::tool::printer::debug_line(&format!(
                     "The err receiver recv:{:?}",
                     ok
@@ -351,7 +354,7 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
 
                 return Ok(());
             }
-            Some(some) => some,
+            Some(some) => some
         };
 
         // 检查依赖

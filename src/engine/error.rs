@@ -8,7 +8,6 @@
 
 use crate::engine::ast::ast::Ast;
 use crate::parser::parse::Token;
-use crate::tool;
 use std::error::Error;
 use std::thread;
 use std::fmt;
@@ -92,6 +91,16 @@ impl RuntimeError {
                 thread::current().name().unwrap_or("UNKNOWN"),
                 pos.0, pos.1));
             }
+        }
+    }
+
+    pub fn create_error(err : &str) -> RuntimeError{
+        RuntimeError {
+            reason_token: None,
+            reason_err: None,
+            reason_str: Some(err.to_string()),
+            help_str: None,
+            error_ast: None,
         }
     }
 }

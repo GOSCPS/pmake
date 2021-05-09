@@ -9,32 +9,16 @@
 use colored::*;
 use std::io;
 
-// Print Error
-/*pub fn error(msg : String){
-    eprint!("{} {}:{}","pmake".bold(),"error".bright_red(),msg);
+// 写
+pub fn write(msg : &str){
+    io::stderr().lock();
+    print!("{}",msg);
 }
-
-// Print Warning
-pub fn warn(msg : String){
-    eprint!("{} {}:{}","pmake".bold(),"warn ".bright_yellow(),msg);
-}
-
-// Print Ok
-pub fn ok(msg : String){
-    print!("{}",&msg.green());
-}
-
-// Print Help
-pub fn help(msg : String){
-    print!("{} {}:{}","pmake".bold(),"help ".bright_blue(),msg);
-}*/
-
-/* Print for a line */
 
 // Print Error
 pub fn error_line(msg: &str) {
-    io::stdout().lock();
-    eprintln!("{} {}:{}", "remake".bold(), "error".bright_red().bold(), msg);
+        io::stdout().lock();
+        eprintln!("{} {}:{}", "remake".bold(), "error".bright_red().bold(), msg);
 }
 
 // Print Warning
@@ -43,7 +27,18 @@ pub fn warn_line(msg: &str) {
     eprintln!(
         "{} {}:{}",
         "remake".bold(),
-        "warn ".bright_yellow().bold(),
+        "warn ".bright_yellow().dimmed(),
+        msg
+    );
+}
+
+// Print Trace
+pub fn trace_line(msg: &str) {
+    io::stderr().lock();
+    println!(
+        "{} {}:{}",
+        "remake".bold(),
+        "trace".white().bold(),
         msg
     );
 }

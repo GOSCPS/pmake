@@ -14,8 +14,12 @@ use crate::engine::{
 use std::path::PathBuf;
 use std::panic;
 use std::panic::AssertUnwindSafe;
+use std::collections::VecDeque;
 use std::sync::Arc;
 use std::thread;
+use std::io::Read;
+use std::process;
+use std::process::Stdio;
 
 // 抽象语法树
 pub trait Ast: Send + Sync {
@@ -477,7 +481,7 @@ pub struct TryAst {
 }
 
 impl Ast for TryAst {
-    fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
+    fn execute(&self, _context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
         let wrapper = AssertUnwindSafe(&self);
 
         let result = panic::catch_unwind(move || {
@@ -521,6 +525,96 @@ impl Ast for TryAst {
     fn clone(&self) -> Box<dyn Ast> {
         Box::new(TryAst {
             aim: self.aim.clone(),
+            position: self.position.clone(),
+        })
+    }
+    fn get_position(&self) -> Option<(Arc<PathBuf>, usize)> {
+        return self.position.clone();
+    }
+}
+
+// shell execute ast
+#[derive(Clone)]
+pub struct ShAst {
+    pub args: Vec<Box<dyn Ast>>,
+    pub position: Option<(Arc<PathBuf>, usize)>,
+}
+
+impl Ast for ShAst {
+    fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
+        // 获取参数
+        let mut variable : VecDeque<Variable> = VecDeque::new();
+
+        for arg in &self.args{
+            match arg.execute(context){
+                Err(err) => return Err(err),
+
+                Ok(ok) => variable.push_back(ok)
+            }
+        }
+
+        if variable.len() == 0{
+            return Err(RuntimeError::create_error("Need one arg to as program name as least!"));
+        }
+
+        // 命令
+        let mut cmd_str = String::new();
+
+        // 执行
+        let temp = variable.pop_front().unwrap();
+        cmd_str.push_str(&temp.to_string());
+        cmd_str.push(' ');
+
+        let mut cmd = process::Command::new(
+            temp.to_string());
+
+        for arg in variable.into_iter(){
+            cmd_str.push_str(&arg.to_string());
+            cmd_str.push(' ');
+            cmd.arg(arg.to_string());
+        }
+
+        // 输出命令
+        crate::tool::printer::trace_line(&format!("{}:{}",
+        thread::current().name().unwrap_or("UNKNOWN"),
+        cmd_str));
+
+        // 执行
+        return match cmd
+        .stdout(Stdio::piped()).spawn(){
+            Err(err) => Err(RuntimeError::create_error(&err.to_string())),
+
+            Ok(ok) => {
+                // 退出代码
+                let code = cmd.status().unwrap().code().unwrap_or(1);
+
+                let mut output = String::new();
+                ok.stdout.unwrap().read_to_string(&mut output);
+
+                // 输出output
+                if output.ends_with('\n'){
+                    print!("{}",output);
+                }
+                else{
+                    println!("{}",output);
+                }
+
+                // 非0
+                if code != 0{
+                    return Err(RuntimeError::create_error("The program return code isn't zero!"));
+                }
+
+                Ok(Variable{
+                name : Arc::from("# ShAst program output #"),
+                typed : VariableType::Str(output)
+            })
+        }
+        }
+    }
+
+    fn clone(&self) -> Box<dyn Ast> {
+        Box::new(ShAst {
+            args: self.args.clone(),
             position: self.position.clone(),
         })
     }

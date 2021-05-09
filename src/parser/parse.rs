@@ -27,6 +27,7 @@ pub enum TokenType {
     KeywordSetGlobal,
     KeywordDrop,
     KeywordTry,
+    KeywordSh,
 
     // ( )
     Parentheses,
@@ -53,6 +54,9 @@ pub enum TokenType {
     Sub,
     Mul,
     Div,
+
+    // $
+    Dollar,
 }
 
 // Token
@@ -370,6 +374,8 @@ pub fn parse_token(lines: &[LineInfo]) -> Result<Vec<Token>, ParseError> {
                     typed = TokenType::KeywordDrop;
                 } else if ident == "try"{
                     typed = TokenType::KeywordTry;
+                } else if ident == "sh"{
+                    typed = TokenType::KeywordSh;
                 }
                 else {
                     typed = TokenType::Identifier(ident);
@@ -401,6 +407,13 @@ pub fn parse_token(lines: &[LineInfo]) -> Result<Vec<Token>, ParseError> {
             } else if chars[ptr] == ')' {
                 current = Token {
                     typed: TokenType::ParenthesesEnd,
+                    line_number: line.line_number,
+                    offset: ptr,
+                    file: source_file.clone(),
+                }
+            } else if chars[ptr] == '$' {
+                current = Token {
+                    typed: TokenType::Dollar,
                     line_number: line.line_number,
                     offset: ptr,
                     file: source_file.clone(),

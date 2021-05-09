@@ -1,7 +1,8 @@
 
 target default{
         try abort()
-        println("You should see this!")
+
+        sh "echo" $(sh "echo" "Hello World")
 }
 drop{
         println("You shouldn't see this!")

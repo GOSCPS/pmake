@@ -191,7 +191,10 @@ fn main() {
         let file = parser::control::parse_file(&BUILD_FILE_NAME.lock().unwrap());
 
         match file {
-            Err(err) => err.to_string(),
+            Err(err) => {
+                err.to_string();
+                panic!("Parse file filed!");
+            }
 
             Ok(ok) => {
                 printer::ok_line("parse file finished");

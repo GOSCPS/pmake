@@ -7,6 +7,8 @@
 //=========================================================
 
 use crate::engine::ast::ast::TryAst;
+use crate::parser::parsing::expression::is_expression;
+use crate::engine::ast::ast::ShAst;
 
 // 解析赋值语句
 pub fn parse_statement_assignment(tokens: &mut TokenStream)
@@ -162,16 +164,42 @@ pub fn parse_statement(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseEr
             }));
         }
 
+    // Sh语句
+    else if tokens.get_current().typed == TokenType::KeywordSh{
+        tokens.next();
+        let mut args : Vec<Box<dyn Ast>> = Vec::new();
+
+        // 收集参数
+        loop{
+            if tokens.is_end() || !is_expression(tokens){
+                break;
+            }
+            else{
+                match parse_expression(tokens){
+                    Err(err) => return Err(err),
+
+                    Ok(ok) => args.push(ok)
+                }
+            }
+        }
+
+        // 返回
+        return Ok(Box::new(ShAst{
+            args,
+            position : Some((tokens.get_current().file.clone(),tokens.get_current().line_number))
+        }));
+    }
+
     // 表达式
     else {
-        let result= parse_expression(tokens);
-
-        if !tokens.is_end() && tokens.get_current().typed != TokenType::EndLine{
+        if is_expression(tokens){
+            return parse_expression(tokens);
+        }
+        else{
             return Err(tokens.generate_error(
-                Some("Unexpected token.".to_string()),
+                Some("Unknown statement token begin!".to_string()),
                 None
             ));
         }
-        return result;
     }
 }

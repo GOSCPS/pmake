@@ -8,6 +8,9 @@
 
 use crate::engine::{context::Context, error, variable};
 use crate::standard::help::error::RuntimeError;
+use std::thread;
+use std::convert::TryInto;
+use std::time::Duration;
 
 pub fn abort(
     _args: Vec<variable::Variable>,
@@ -20,4 +23,22 @@ pub fn abort(
         help_str: None,
         error_ast: None,
     })
+}
+
+// sleep
+pub fn sleep(
+    args: Vec<variable::Variable>,
+    _: &mut Context,
+) -> Result<variable::Variable, error::RuntimeError> {
+
+    if args.len() != 1{
+        return Err(RuntimeError::create_error("sleep():Need one number arg!"));
+    }
+    else if let variable::VariableType::Number(num) = args[0].typed{
+        thread::sleep(Duration::new(0, num.try_into().unwrap()));
+        return Ok(variable::Variable::none_value());
+    }
+    else{
+        return Err(RuntimeError::create_error("sleep():Need one number!"));
+    }
 }
