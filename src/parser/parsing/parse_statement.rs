@@ -165,7 +165,7 @@ pub fn parse_statement(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseEr
         }
 
     // Sh语句
-    else if tokens.get_current().typed == TokenType::KeywordSh{
+    else if tokens.get_current().typed == TokenType::KeywordExec{
         tokens.next();
         let mut args : Vec<Box<dyn Ast>> = Vec::new();
 

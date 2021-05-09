@@ -587,7 +587,7 @@ impl Ast for ShAst {
                 let code = cmd.status().unwrap().code().unwrap_or(1);
 
                 let mut output = String::new();
-                ok.stdout.unwrap().read_to_string(&mut output);
+                ok.stdout.unwrap().read_to_string(&mut output).unwrap();
 
                 // 输出output
                 if output.ends_with('\n') {

@@ -27,7 +27,7 @@ pub enum TokenType {
     KeywordSetGlobal,
     KeywordDrop,
     KeywordTry,
-    KeywordSh,
+    KeywordExec,
 
     // ( )
     Parentheses,
@@ -374,8 +374,8 @@ pub fn parse_token(lines: &[LineInfo]) -> Result<Vec<Token>, ParseError> {
                     typed = TokenType::KeywordDrop;
                 } else if ident == "try" {
                     typed = TokenType::KeywordTry;
-                } else if ident == "sh" {
-                    typed = TokenType::KeywordSh;
+                } else if ident == "exec" {
+                    typed = TokenType::KeywordExec;
                 } else {
                     typed = TokenType::Identifier(ident);
                 }
