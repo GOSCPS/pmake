@@ -621,7 +621,8 @@ impl Ast for ShAst {
         return match cmd.stdout(Stdio::piped()).spawn() {
             Result::Err(err) => Err(RuntimeError::create_error(&err.to_string())),
 
-            Result::Ok(ok) => {
+            Result::Ok(mut ok) => {
+                ok.wait().unwrap();
                 // 退出代码
                 let code = cmd.status().unwrap().code().unwrap_or(1);
 
@@ -640,7 +641,7 @@ impl Ast for ShAst {
                 // 非0
                 if code != 0 {
                     return Err(RuntimeError::create_error(
-                        "The program return code isn't zero!",
+                        "The exec return code isn't zero!",
                     ));
                 }
 

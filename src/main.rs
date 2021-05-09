@@ -197,7 +197,7 @@ fn main() {
             }
 
             Ok(ok) => {
-                printer::ok_line("parse file finished");
+                printer::trace_line("parse file finished");
 
                 match engine::engine::execute_start(ok) {
                     Err(err) => {

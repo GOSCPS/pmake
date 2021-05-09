@@ -15,6 +15,8 @@ use crate::Mutex;
 use lazy_static::lazy_static;
 use std::collections::HashMap;
 use std::sync::mpsc;
+use crate::engine::context::GLOBAL_CONTEXT;
+use crate::engine::variable::{Variable,VariableType};
 use std::sync::mpsc::Receiver;
 use std::sync::mpsc::Sender;
 use std::sync::Arc;
@@ -80,6 +82,16 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
                 .unwrap()
                 .insert(target.name.to_string(), target);
         }
+    }
+
+    // 定义用户设置的变量
+    for user_var in crate::GLOBAL_VARIABLE_TABLE.lock().unwrap().iter(){
+        GLOBAL_CONTEXT.variable_table.write().unwrap().insert(
+            user_var.0.to_string(),
+            Variable{
+                name : Arc::from(&user_var.0[0..]),
+                typed : VariableType::Str(user_var.1.to_string())
+            });
     }
 
     // 执行全局语句
@@ -156,7 +168,7 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
                 thread::Builder::new()
                     .name(format!("Worker-{}", t))
                     .spawn(move || {
-                        crate::tool::printer::ok_line(&format!(
+                        crate::tool::printer::trace_line(&format!(
                             "The {} started!",
                             thread::current().name().unwrap_or("UNKNOWN")
                         ));
@@ -195,7 +207,7 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
                                         err.to_string()
                                     ));
 
-                                    crate::tool::printer::ok_line(&format!(
+                                    crate::tool::printer::trace_line(&format!(
                                         "The {} exit!",
                                         thread::current().name().unwrap_or("UNKNOWN")
                                     ));
