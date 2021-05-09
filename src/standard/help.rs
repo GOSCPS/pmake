@@ -54,7 +54,7 @@ pub fn sleep(
 fn temp_bool(val: bool) -> variable::Variable {
     variable::Variable {
         typed: variable::VariableType::Boolean(val),
-        name: Arc::from("# Temp Boolean #");
+        name: Arc::from("# Temp Boolean #"),
     }
 }
 
