@@ -5,6 +5,9 @@ edition = "2018"
 authors = ["GOSCPS Team <goscps@foxmail.com>"]
 homepage = "https://github.com/GOSCPS/remake"
 license = "GOSCPS License v3"
+description = "The make-like build system"
+readme = "README.md"
+repository = "https://github.com/GOSCPS/remake"
 
 [dependencies]
 ahash = "0.7"
