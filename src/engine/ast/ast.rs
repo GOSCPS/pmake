@@ -21,9 +21,33 @@ use std::process::Stdio;
 use std::sync::Arc;
 use std::thread;
 
+// Ast执行结果
+pub enum AstResult{
+    Ok(variable::Variable),
+    Err(error::RuntimeError),
+    // 中断
+    // 不再执行
+    Interrupt
+}
+
+impl AstResult{
+    pub fn unwrap(&self) -> variable::Variable{
+        if let Ok(ok) = self{
+            return ok.clone();
+        }
+        else{
+            panic!("The AstResult isn't ok!");
+        }
+    }
+}
+
+use AstResult::Ok;
+use AstResult::Err;
+use AstResult::Interrupt;
+
 // 抽象语法树
 pub trait Ast: Send + Sync {
-    fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError>;
+    fn execute(&self, context: &mut Context) -> AstResult;
     fn clone(&self) -> Box<dyn Ast>;
 
     // return (文件名称,行号)
@@ -42,7 +66,7 @@ pub struct NopAst {
 }
 
 impl Ast for NopAst {
-    fn execute(&self, _context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
+    fn execute(&self, _context: &mut Context) -> AstResult {
         std::hint::spin_loop();
         Ok(Variable {
             name: Arc::from("# Temporary value from NopAST #".to_string()),
@@ -68,7 +92,7 @@ pub struct AssignmentAst {
 }
 
 impl Ast for AssignmentAst {
-    fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
+    fn execute(&self, context: &mut Context) -> AstResult {
         match self.value.execute(context) {
             Ok(ok) => {
                 // 全局变量
@@ -91,6 +115,8 @@ impl Ast for AssignmentAst {
             }
 
             Err(err) => Err(err),
+
+            Interrupt => Interrupt
         }
     }
 
@@ -113,7 +139,7 @@ pub struct ImmediateAst {
 }
 
 impl Ast for ImmediateAst {
-    fn execute(&self, _context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
+    fn execute(&self, _context: &mut Context) -> AstResult {
         return Ok(self.immediate.clone());
     }
 
@@ -135,7 +161,7 @@ pub struct BlockAst {
 }
 
 impl Ast for BlockAst {
-    fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
+    fn execute(&self, context: &mut Context) -> AstResult {
         let mut var: Variable = Variable::none_value();
 
         for ast in &self.blocks {
@@ -143,6 +169,10 @@ impl Ast for BlockAst {
                 Ok(output) => var = output,
 
                 Err(err) => return Err(err),
+
+                // 中断
+                // 不再执行
+                Interrupt => break
             }
         }
 
@@ -175,7 +205,7 @@ impl Ast for GetVariableAst {
         })
     }
 
-    fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
+    fn execute(&self, context: &mut Context) -> AstResult {
         // 从本地变量获取
         if context
             .variable_table
@@ -231,8 +261,8 @@ pub enum ExprOp {
     Mul,
     Div,
     Left,
-    Right,
-    Pipeline,
+    //Right,
+    //Pipeline,
 }
 
 // 表达式AST
@@ -245,33 +275,33 @@ pub struct ExprAst {
 }
 
 impl Ast for ExprAst {
-    fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
+    fn execute(&self, context: &mut Context) -> AstResult {
         // 特殊的操作
         if let ExprOp::Left = self.op {
             return self.left.execute(context);
-        } else if let ExprOp::Right = self.op {
+        } /*else if let ExprOp::Right = self.op {
             return self.right.execute(context);
         } else if let ExprOp::Pipeline = self.op {
             let lft = self.left.execute(context);
 
-            if let Result::Err(err) = lft {
+            if let Err(err) = lft {
                 return Err(err);
             } else {
                 return self.right.execute(context);
             }
-        }
+        }*/
 
         // 准备好左值和右值
         let left_ = self.left.execute(context);
         let right_;
 
-        if left_.is_err() {
-            return Err(left_.err().unwrap());
+        if let Err(err) = left_ {
+            return Err(err);
         } else {
             right_ = self.right.execute(context);
 
-            if right_.is_err() {
-                return Err(right_.err().unwrap());
+            if let Err(err) = right_ {
+                return Err(err);
             }
         }
 
@@ -426,7 +456,7 @@ pub struct CallAst {
 }
 
 impl Ast for CallAst {
-    fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
+    fn execute(&self, context: &mut Context) -> AstResult {
         let lock = super::super::context::GLOBAL_FUNCTION.lock().unwrap();
 
         match lock.get(&self.name) {
@@ -443,6 +473,8 @@ impl Ast for CallAst {
                         Err(err) => return Err(err),
 
                         Ok(ok) => arg_value.push(ok),
+
+                        Interrupt => return Interrupt
                     }
                 }
 
@@ -481,13 +513,15 @@ pub struct TryAst {
 }
 
 impl Ast for TryAst {
-    fn execute(&self, _context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
+    fn execute(&self, _context: &mut Context) -> AstResult {
         let wrapper = AssertUnwindSafe(&self);
 
         let result = panic::catch_unwind(move || match wrapper.aim.execute(&mut Context::new()) {
             Err(err) => Err(err),
 
             Ok(ok) => Ok(ok),
+
+            Interrupt => Interrupt
         });
 
         if result.is_err() {
@@ -510,6 +544,8 @@ impl Ast for TryAst {
                 }
 
                 Ok(ok) => Ok(ok),
+
+                Interrupt => Interrupt
             };
         }
         // 不可能
@@ -534,10 +570,11 @@ impl Ast for TryAst {
 pub struct ShAst {
     pub args: Vec<Box<dyn Ast>>,
     pub position: Option<(Arc<PathBuf>, usize)>,
+    pub output : bool
 }
 
 impl Ast for ShAst {
-    fn execute(&self, context: &mut Context) -> Result<variable::Variable, error::RuntimeError> {
+    fn execute(&self, context: &mut Context) -> AstResult {
         // 获取参数
         let mut variable: VecDeque<Variable> = VecDeque::new();
 
@@ -546,6 +583,8 @@ impl Ast for ShAst {
                 Err(err) => return Err(err),
 
                 Ok(ok) => variable.push_back(ok),
+
+                Interrupt => return Interrupt
             }
         }
 
@@ -580,9 +619,9 @@ impl Ast for ShAst {
 
         // 执行
         return match cmd.stdout(Stdio::piped()).spawn() {
-            Err(err) => Err(RuntimeError::create_error(&err.to_string())),
+            Result::Err(err) => Err(RuntimeError::create_error(&err.to_string())),
 
-            Ok(ok) => {
+            Result::Ok(ok) => {
                 // 退出代码
                 let code = cmd.status().unwrap().code().unwrap_or(1);
 
@@ -590,10 +629,12 @@ impl Ast for ShAst {
                 ok.stdout.unwrap().read_to_string(&mut output).unwrap();
 
                 // 输出output
+                if self.output{
                 if output.ends_with('\n') {
-                    print!("{}", output);
+                    crate::tool::printer::write(&format!("{}", output));
                 } else {
-                    println!("{}", output);
+                    crate::tool::printer::write(&format!("{}\n", output));
+                }
                 }
 
                 // 非0
@@ -614,6 +655,81 @@ impl Ast for ShAst {
     fn clone(&self) -> Box<dyn Ast> {
         Box::new(ShAst {
             args: self.args.clone(),
+            position: self.position.clone(),
+            output : self.output
+        })
+    }
+    fn get_position(&self) -> Option<(Arc<PathBuf>, usize)> {
+        return self.position.clone();
+    }
+}
+
+// 返回Ast
+#[derive(Clone)]
+pub struct ReturnAst {
+    pub position: Option<(Arc<PathBuf>, usize)>,
+}
+
+impl Ast for ReturnAst {
+    fn execute(&self, _context: &mut Context) -> AstResult {
+        AstResult::Interrupt
+    }
+    fn clone(&self) -> Box<dyn Ast> {
+        Box::new(ReturnAst {
+            position: self.position.clone(),
+        })
+    }
+    fn get_position(&self) -> Option<(Arc<PathBuf>, usize)> {
+        return self.position.clone();
+    }
+}
+
+// 判断true or false
+pub fn condition(var : &Variable) -> bool{
+    match &var.typed{
+        VariableType::None => false,
+
+        VariableType::Boolean(boolean) => *boolean,
+
+        VariableType::Number(num) => if *num == 0 {false} else {true},
+
+        VariableType::Str(strs) => if strs.len() == 0{false} else {true}
+    }
+}
+
+// if ast
+#[derive(Clone)]
+pub struct IfAst {
+    pub condition : Box<dyn Ast>,
+    pub body : Box<dyn Ast>,
+    pub also : Box<dyn Ast>,
+    pub position: Option<(Arc<PathBuf>, usize)>,
+}
+
+impl Ast for IfAst {
+    fn execute(&self, context: &mut Context) -> AstResult {
+        // 检查条件
+        match self.condition.execute(context){
+            Err(err) => return Err(err),
+
+            // 执行
+            Ok(ok) =>{
+                return if condition(&ok) {
+                    self.body.execute(context)
+                }
+                else{
+                    self.also.execute(context)
+                }
+            }
+
+            Interrupt => return Interrupt
+        }
+    }
+    fn clone(&self) -> Box<dyn Ast> {
+        Box::new(IfAst {
+            condition : self.condition.clone(),
+            body : self.body.clone(),
+            also : self.also.clone(),
             position: self.position.clone(),
         })
     }

@@ -20,6 +20,7 @@ use std::sync::mpsc::Sender;
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
+use crate::engine::ast::ast::AstResult;
 
 // 全局
 lazy_static! {
@@ -83,9 +84,11 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
 
     // 执行全局语句
     match start.global_statements.execute(&mut Context::new()) {
-        Err(err) => return Err(err),
+        AstResult::Err(err) => return Err(err),
 
-        Ok(_ok) => (),
+        AstResult::Ok(_ok) => (),
+
+        AstResult::Interrupt => ()
     }
 
     // 检查目标是否为空
@@ -207,7 +210,7 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
                                     // 执行任务
                                     match target.body.execute(&mut context) {
                                         // 翻车
-                                        Err(err) => {
+                                        AstResult::Err(err) => {
                                             // 打印一些错误
                                             err.show_to_console();
 
@@ -236,12 +239,12 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
 
                                                 // 捕获执行错误
                                                 match drops.execute(&mut context) {
-                                                    Err(drop_err) => {
+                                                    AstResult::Err(drop_err) => {
                                                         // 打印信息 & 发送错误
                                                         drop_err.show_to_console();
 
                                                         crate::tool::printer::debug_line(&format!(
-                                                            "{}:{:}",
+                                                            "{}:{}",
                                                             thread::current()
                                                                 .name()
                                                                 .unwrap_or("UNKNOWN"),
@@ -253,13 +256,13 @@ pub fn execute_start(start: PFile) -> Result<(), RuntimeError> {
                                                             .unwrap();
                                                     }
 
-                                                    Ok(_ok) => (),
+                                                    _ => (),
                                                 }
                                             }
                                         }
 
                                         // 添加到完成列表
-                                        Ok(_ok) => {
+                                        _ => {
                                             crate::tool::printer::ok_line(&format!(
                                                 "The target `{}` build finished!",
                                                 target.name

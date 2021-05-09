@@ -13,4 +13,3 @@ repository = "https://github.com/GOSCPS/remake"
 ahash = "0.7"
 colored = "2.0.0"
 lazy_static = "1.4.0"
-indicatif = {version = "0.16.0",features=["improved_unicode"]}

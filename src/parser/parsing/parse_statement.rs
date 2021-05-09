@@ -9,6 +9,8 @@
 use crate::engine::ast::ast::TryAst;
 use crate::parser::parsing::expression::is_expression;
 use crate::engine::ast::ast::ShAst;
+use crate::engine::ast::ast::ReturnAst;
+use crate::engine::ast::ast::IfAst;
 
 // 解析赋值语句
 pub fn parse_statement_assignment(tokens: &mut TokenStream)
@@ -88,6 +90,68 @@ pub fn parse_statement_assignment(tokens: &mut TokenStream)
     }
 }
 
+// 解析if语句
+pub fn parse_statement_if(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseError>{
+     // miss 语句
+    if tokens.is_end(){
+        return Err(tokens.generate_error(
+            Some("Miss `if` statement!".to_string()),
+            Some("Need a `if` statement.".to_string())));
+    } else if tokens.get_current().typed != TokenType::KeywordIf{
+        return Err(tokens.generate_error(
+            Some("Miss `if` token!".to_string()),
+            Some("Need a `if` token.".to_string())));
+    }
+
+    tokens.next();
+
+    // 获取expr
+    let condition =
+        match parse_expression(tokens){
+            Err(err) => return Err(err),
+
+            Ok(ok) => ok
+        };
+
+        tokens.skip_end_line();
+
+    // 获取body
+    let body = match parse_statement(tokens){
+        Err(err) => return Err(err),
+
+        Ok(ok) => ok
+    };
+
+    tokens.skip_end_line();
+
+    // 检查有无else
+    let also = if !tokens.is_end() && tokens.get_current().typed == TokenType::KeywordElse{
+        tokens.next();
+        tokens.skip_end_line();
+
+        match parse_statement(tokens){
+            Err(err) => return Err(err),
+
+            Ok(ok) => ok
+        }
+    }
+    else{
+        Box::new(NopAst{
+            position : Some((tokens.get_current().file.clone(),tokens.get_current().line_number))
+        })
+    };
+
+    // 构造
+    Ok(Box::new(
+        IfAst{
+            condition,
+            body,
+            also,
+            position : Some((tokens.get_current().file.clone(),tokens.get_current().line_number))
+        }
+    ))
+}
+
 // 解析语句
 pub fn parse_statement(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseError> {
     // 跳过EndLine
@@ -103,6 +167,15 @@ pub fn parse_statement(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseEr
     if let TokenType::Semicolon = tokens.get_current().typed{
         tokens.next();
         return Ok(Box::new(NopAst{
+            position : Some((tokens.get_current().file.clone(),tokens.get_current().line_number))
+        }));
+    }
+
+    // return
+    // 返回
+    else if let TokenType::KeywordReturn = tokens.get_current().typed{
+        tokens.next();
+        return Ok(Box::new(ReturnAst{
             position : Some((tokens.get_current().file.clone(),tokens.get_current().line_number))
         }));
     }
@@ -151,6 +224,11 @@ pub fn parse_statement(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseEr
         return parse_statement_assignment(tokens);
     }
 
+    // if语句
+    else if tokens.get_current().typed == TokenType::KeywordIf{
+        return parse_statement_if(tokens);
+    }
+
     // try语句
     else if tokens.get_current().typed == TokenType::KeywordTry{
         tokens.next();
@@ -165,7 +243,16 @@ pub fn parse_statement(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseEr
         }
 
     // Sh语句
-    else if tokens.get_current().typed == TokenType::KeywordExec{
+    else if tokens.get_current().typed == TokenType::KeywordExec
+    || tokens.get_current().typed == TokenType::KeywordQuietExec{
+        // 判断是否输出
+        let output = if tokens.get_current().typed == TokenType::KeywordQuietExec{
+            false
+        }
+        else{
+            true
+        };
+
         tokens.next();
         let mut args : Vec<Box<dyn Ast>> = Vec::new();
 
@@ -186,7 +273,8 @@ pub fn parse_statement(tokens: &mut TokenStream) -> Result<Box<dyn Ast>, ParseEr
         // 返回
         return Ok(Box::new(ShAst{
             args,
-            position : Some((tokens.get_current().file.clone(),tokens.get_current().line_number))
+            position : Some((tokens.get_current().file.clone(),tokens.get_current().line_number)),
+            output
         }));
     }
 

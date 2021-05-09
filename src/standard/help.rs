@@ -6,20 +6,31 @@
 // Copyright (c) 2020-2021 GOSCPS 保留所有权利.
 //=========================================================
 
-use crate::engine::{context::Context, error, variable};
-use crate::standard::help::error::RuntimeError;
+use crate::engine::{context::Context,variable,ast::ast::AstResult};
 use std::convert::TryInto;
 use std::thread;
 use std::time::Duration;
+use crate::engine::error::RuntimeError;
 
 pub fn abort(
-    _args: Vec<variable::Variable>,
+    args: Vec<variable::Variable>,
     _: &mut Context,
-) -> Result<variable::Variable, error::RuntimeError> {
-    Err(RuntimeError {
+) -> AstResult {
+    let mut reason = String::new();
+
+    for arg in args.into_iter(){
+        reason.push_str(&arg.to_string());
+        reason.push(' ');
+    }
+
+    if reason.len() == 0{
+        reason.push_str("Interrupt");
+    }
+
+    AstResult::Err(RuntimeError {
         reason_token: None,
         reason_err: None,
-        reason_str: Some("Manual trigger -> abort() function.".to_string()),
+        reason_str: Some(format!("abort():{}",reason)),
         help_str: None,
         error_ast: None,
     })
@@ -29,13 +40,13 @@ pub fn abort(
 pub fn sleep(
     args: Vec<variable::Variable>,
     _: &mut Context,
-) -> Result<variable::Variable, error::RuntimeError> {
+) -> AstResult {
     if args.len() != 1 {
-        return Err(RuntimeError::create_error("sleep():Need one number arg!"));
+        return AstResult::Err(RuntimeError::create_error("sleep():Need one number arg!"));
     } else if let variable::VariableType::Number(num) = args[0].typed {
         thread::sleep(Duration::new(0, num.try_into().unwrap()));
-        return Ok(variable::Variable::none_value());
+        return AstResult::Ok(variable::Variable::none_value());
     } else {
-        return Err(RuntimeError::create_error("sleep():Need one number!"));
+        return AstResult::Err(RuntimeError::create_error("sleep():Need one number!"));
     }
 }

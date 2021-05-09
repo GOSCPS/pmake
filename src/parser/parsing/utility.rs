@@ -37,9 +37,11 @@ impl TokenStream {
         self.ptr += 1
     }
 
+    /*
     pub fn back(&mut self) {
         self.ptr -= 1
     }
+    */
 
     pub fn skip_end_line(&mut self) {
         // 跳过EndLine

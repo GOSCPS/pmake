@@ -6,12 +6,12 @@
 // Copyright (c) 2020-2021 GOSCPS 保留所有权利.
 //=========================================================
 
-use crate::engine::{context::Context, error, variable, variable::Variable};
+use crate::engine::{context::Context, variable, variable::Variable,ast::ast::AstResult};
 
 pub fn print(
     args: Vec<variable::Variable>,
     _: &mut Context,
-) -> Result<variable::Variable, error::RuntimeError> {
+) -> AstResult {
     for arg in args {
         match &arg.typed {
             variable::VariableType::Boolean(bol) => {
@@ -31,22 +31,31 @@ pub fn print(
             }
         }
     }
-    Ok(Variable::none_value())
+    AstResult::Ok(Variable::none_value())
 }
 
 pub fn println(
     args: Vec<variable::Variable>,
     context: &mut Context,
-) -> Result<variable::Variable, error::RuntimeError> {
-    print(args, context)?;
-    print!("\n");
-    Ok(Variable::none_value())
+) -> AstResult {
+    match print(args, context){
+        AstResult::Err(err) => return AstResult::Err(err),
+
+        AstResult::Ok(_ok) => {
+            print!("\n");
+            return AstResult::Ok(Variable::none_value());
+        }
+
+        AstResult::Interrupt => {
+            return AstResult::Ok(Variable::none_value());
+        }
+    }
 }
 
 pub fn eprint(
     args: Vec<variable::Variable>,
     _: &mut Context,
-) -> Result<variable::Variable, error::RuntimeError> {
+) -> AstResult {
     for arg in args {
         match &arg.typed {
             variable::VariableType::Boolean(bol) => {
@@ -66,14 +75,23 @@ pub fn eprint(
             }
         }
     }
-    Ok(Variable::none_value())
+    AstResult::Ok(Variable::none_value())
 }
 
 pub fn eprintln(
     args: Vec<variable::Variable>,
     context: &mut Context,
-) -> Result<variable::Variable, error::RuntimeError> {
-    eprint(args, context)?;
-    eprint!("\n");
-    Ok(Variable::none_value())
+) -> AstResult {
+    match eprint(args, context){
+        AstResult::Err(err) => return AstResult::Err(err),
+
+        AstResult::Ok(_ok) => {
+            eprint!("\n");
+            return AstResult::Ok(Variable::none_value());
+        }
+
+        AstResult::Interrupt => {
+            return AstResult::Ok(Variable::none_value());
+        }
+    }
 }

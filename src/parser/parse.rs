@@ -28,6 +28,10 @@ pub enum TokenType {
     KeywordDrop,
     KeywordTry,
     KeywordExec,
+    KeywordQuietExec,
+    KeywordReturn,
+    KeywordIf,
+    KeywordElse,
 
     // ( )
     Parentheses,
@@ -376,7 +380,16 @@ pub fn parse_token(lines: &[LineInfo]) -> Result<Vec<Token>, ParseError> {
                     typed = TokenType::KeywordTry;
                 } else if ident == "exec" {
                     typed = TokenType::KeywordExec;
-                } else {
+                } else if ident == "qexec" {
+                    typed = TokenType::KeywordQuietExec
+                } else if ident == "return"{
+                    typed = TokenType::KeywordReturn
+                } else if ident == "if" {
+                    typed = TokenType::KeywordIf
+                } else if ident == "else"{
+                    typed = TokenType::KeywordElse
+                }
+                else {
                     typed = TokenType::Identifier(ident);
                 }
 
