@@ -50,3 +50,27 @@ pub fn sleep(
         return AstResult::Err(RuntimeError::create_error("sleep():Need one number!"));
     }
 }
+
+// Detect if host OS is Unix-like.
+pub fn is_unix(
+    _: Vec<variable::Variable>,
+    _: &mut Context,
+) -> AstResult {
+    AstResult::Ok(variable::Variable::Boolean(cfg!(unix)))
+}
+
+// Detect if host OS is Microsoft Windows.
+pub fn is_win(
+    _: Vec<variable::Variable>,
+    _: &mut Context,
+) -> AstResult {
+    AstResult::Ok(variable::Variable::Boolean(cfg!(windows)))
+}
+
+// Detect if host OS is Linux.
+pub fn is_linux(
+    _: Vec<variable::Variable>,
+    _: &mut Context,
+) -> AstResult {
+    AstResult::Ok(variable::Variable::Boolean(cfg!(target_os = "linux")))
+}
