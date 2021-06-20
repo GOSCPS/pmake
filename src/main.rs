@@ -5,237 +5,148 @@
 // Content: pmake main source code
 // Copyright (c) 2020-2021 GOSCPS 保留所有权利.
 //=========================================================
-use lazy_static::lazy_static;
-use std::collections::HashMap;
 use std::env;
 use std::panic;
+use std::panic::PanicInfo;
 use std::process;
 use std::sync::Mutex;
-use std::time::Instant;
+use std::collections::HashSet;
 
-mod algorithm;
+use num_cpus;
+
+// 声明模块
+mod tools;
 mod engine;
-mod parser;
-mod standard;
-mod tool;
 
-use tool::printer;
+use lazy_static::lazy_static;
 
-use crate::engine::context::Context;
-
-// 全局变量定义
 lazy_static! {
-    // 全局变量表
-    pub static ref GLOBAL_VARIABLE_TABLE: Mutex<HashMap<String, String>>
-        = Mutex::new(HashMap::new());
+    // debug模式
+    pub static ref DEBUGMODE : Mutex<bool> = Mutex::from(false);
 
-    // 全局变量表
-    pub static ref TARGET_LIST: Mutex<Vec<String>>
-        = Mutex::new(Vec::new());
+    // 构建目标
+    pub static ref TARGET : Mutex<HashSet<String>>
+    = Mutex::new(HashSet::new());
 
-    // 构建文件名称
-    pub static ref BUILD_FILE_NAME : Mutex<String>
-        = Mutex::new(String::from("remake.make"));
+    // 目标
+    pub static ref THREAD : Mutex<u64>
+    = Mutex::new(1);
 
-    // 构建线程名称
-    pub static ref BUILD_THREAD_COUNT : Mutex<u64>
-        = Mutex::new(1_u64);
+    pub static ref BUILD : Mutex<String>
+    = Mutex::new(String::from("build.pmake"));
+}
+
+// bug报告
+fn panic_report(panic_info: &PanicInfo) {
+    // 打印其他信息
+    tools::printer::error("Panic occurred");
+    tools::printer::error("Info:");
+
+    tools::printer::error(&format!("Pmake version:{}", env!("CARGO_PKG_VERSION")));
+    tools::printer::error(&format!(
+        "Target:{}-{}",
+        env::consts::OS,
+        env::consts::ARCH
+    ));
+    tools::printer::error(&format!("Build file:{}",
+    match BUILD.lock(){
+        Ok(some) => format!("{}",*some),
+        Err(_) => "<Unknown File>".to_string()
+    }));
+
+    tools::printer::error(&format!("Thread count:{}",
+    match THREAD.lock(){
+        Ok(some) => format!("{}",*some),
+        Err(_) => "Unknown".to_string()
+    }));
+
+    // 打印panic信息
+    if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
+        tools::printer::error(&format!("{}", s));
+    } 
+    else if let Some(s) = panic_info.payload().downcast_ref::<String>(){
+        tools::printer::error(&format!("{}", s));
+    }
+    else {
+        tools::printer::error("Box<Any>");
+    }
+
+    // 打印位置信息
+    if let Some(location) = panic_info.location() {
+        tools::printer::error(&format!(
+            "Panic occurred in file '{}' at line {}", 
+            location.file(), 
+            location.line()));
+    } 
 }
 
 // 打印帮助
-fn print_help() {
-    let args: Vec<String> = env::args().collect();
-
-    println!("Usgae:{} [-Options] [Targets]", &args[0]);
-    println!("Options:");
-    println!(
-        "\t{}\t\t\t{}",
-        "-define=[KEY=VALUE]", "Define a global variable."
-    );
-    println!("\t{}\t\t\t{}", "-noLogo", "Not output the logo.");
-    println!("\t{}\t\t\t{}", "-help", "Print help then exit.");
-    println!("\t{}\t\t\t{}", "-info", "Print info then exit.");
-    println!("\t{}\t\t\t{}", "-version", "Print version then exit.");
-    println!(
-        "\t{}\t\t{}",
-        "-file=FileName", "Set the build file name.Default `remake.make`."
-    );
-    println!(
-        "\t{}\t{}",
-        "-define=Key[=Value]", "Set the variable.Default value is `1`."
-    );
-    println!(
-        "\t{}\t{}",
-        "-thread=[Value]", "Set the thread count.Default value is `1`."
-    );
-}
-
-// 打印信息
-fn print_info() {
-    println!("License: {}", "GOSCPS License v3");
-    println!("Version: {}", env!("CARGO_PKG_VERSION"));
-    println!("ARCH-OS: {}-{}", env::consts::ARCH, env::consts::OS);
+fn print_help(){
+    tools::printer::okay("Usage:pmake [options]");
+    tools::printer::okay("Options:");
+    tools::printer::okay("\t-thread=[u64]\t\tSet the build use thread count.");
+    tools::printer::okay("\t-target=[value]\tDefine build aim targets.");
+    tools::printer::okay("\t-help\t\t\tPrint help to stdout.");
+    tools::printer::okay("\t-file=[filename]\t\tSet the build file name.");
 }
 
 // 入口函数
 fn main() {
-    // 解析参数
-    {
-        let mut is_print_logo = true;
+    // 设置panic报告hook
+    panic::set_hook(Box::new(panic_report));
 
-        let args: Vec<String> = env::args().collect();
+    // 设置默认线程数量
+    (*THREAD.lock().unwrap()) = num_cpus::get() as u64;
 
-        // 解析参数
-        // 只截取参数部分
-        for arg in &args[1..] {
-            // 不打印Logo
-            if arg == "-noLogo" {
-                is_print_logo = false;
-            }
-            // 打印帮助
-            else if arg == "-help" {
-                print_help();
-                process::exit(0);
-            }
-            // 打印版本号
-            else if arg == "-version" {
-                println!("{}", env!("CARGO_PKG_VERSION"));
-                process::exit(0);
-            }
-            // 打印信息
-            else if arg == "-info" {
-                print_info();
-                process::exit(0);
-            }
-            // 设置线程
-            else if arg.starts_with("-thread=") {
-                *BUILD_THREAD_COUNT.lock().unwrap() = match &arg["-thread=".len()..].parse::<u64>()
-                {
-                    Err(err) => {
-                        printer::error_line(&err.to_string());
-                        printer::error_line("Parse the thread count error");
+    // 解析命令行参数
+    let args : Vec<String> = env::args().collect();
 
-                        process::exit(1);
-                    }
+    for arg in &args[1..]{
+        // 打印帮助
+        if arg == "-help"{
+            print_help();
+        }
 
-                    Ok(ok) => *ok,
+        // 指定线程数量
+        else if let Some(prefixs) = arg.strip_prefix("-thread="){
+            (*THREAD.lock().unwrap()) = 
+            // 解析数字
+            match prefixs.parse::<u64>(){
+                // 正确的，谢谢
+                Ok(ok) => if ok <= 0 {
+                    tools::printer::error("Try set thread count less than 0!");
+                    process::exit(1);
                 }
-            }
-            // 全局变量
-            else if let Some(def) = arg.strip_prefix("-define=") {
-                let value: String;
-                let name: String;
+                else{
+                    ok
+                },
 
-                // 有值
-                if def.contains('=') {
-                    name = String::from(&def[0..def.find('=').unwrap()]);
-                    value = String::from(&def[(def.find('=').unwrap() + 1)..]);
+                // 太差太差
+                Err(err)=> {
+                    tools::printer::error("Parsing number failed down!");
+                    tools::printer::error(&format!("{}",err));
+                    process::exit(1);
                 }
-                // 无值 默认1
-                else {
-                    name = String::from(def);
-                    value = String::from("1");
-                }
-
-                // 变量已经定义
-                if GLOBAL_VARIABLE_TABLE.lock().unwrap().contains_key(&name) {
-                    printer::warn_line(&format!("The variable `{}` is defined!", name));
-
-                    GLOBAL_VARIABLE_TABLE.lock().unwrap().remove(&name);
-                }
-
-                // 插入变量
-                GLOBAL_VARIABLE_TABLE.lock().unwrap().insert(name, value);
-            }
-            // 文件名称
-            else if arg.starts_with("-file=") {
-                *BUILD_FILE_NAME.lock().unwrap() = String::from(arg.trim_start_matches("-file="));
-            }
-            // 非-开头
-            // 视为target
-            else if !arg.starts_with('-') {
-                TARGET_LIST.lock().unwrap().push(String::from(arg));
-            }
-            // 未知参数
-            else {
-                printer::error_line(&format!("Unknown arg `{}`", &arg));
-                printer::help_line(&format!("Use `{} -help` to get help.", args[0]));
-                process::exit(1);
             }
         }
 
-        // 打印标志
-        if is_print_logo {
-            println!("remake version {}", env!("CARGO_PKG_VERSION"));
-            println!("remake made by GOSCPS");
+        // 指定target
+        else if let Some(target) = arg.strip_prefix("-target="){
+            TARGET.lock().unwrap().insert(target.to_string());
+        }
+
+        // 指定生成的文件名称
+        else if let Some(file) = arg.strip_prefix("-file="){
+            (*BUILD.lock().unwrap()) = file.to_string();
+        }
+
+        // 未知的参数
+        else {
+            tools::printer::error(&format!("Unknown options:{}",arg));
+            process::exit(1);
         }
     }
 
-    // 打印debug信息
-    for pair in GLOBAL_VARIABLE_TABLE.lock().unwrap().iter() {
-        tool::printer::debug_line(&format!("variable:`{}`=`{}`", pair.0, pair.1));
-    }
 
-    tool::printer::debug_line(&format!("build file:{}", BUILD_FILE_NAME.lock().unwrap()));
-
-    // 构建
-    let start = Instant::now();
-    let mut build_success = true;
-
-    // 添加标准库
-    crate::standard::register_standard_lib();
-
-    // 构建
-    // 同时捕获panic
-    if panic::catch_unwind(|| {
-        let file = parser::control::parse_file(&BUILD_FILE_NAME.lock().unwrap());
-
-        match file {
-            Err(err) => {
-                err.to_string();
-                panic!("Parse file filed!");
-            }
-
-            Ok(ok) => {
-                printer::trace_line("parse file finished");
-
-                match engine::engine::execute_start(ok) {
-                    Err(err) => {
-                        printer::debug_line(&format!("{}", err));
-
-                        panic!("Runtime error!");
-                    }
-
-                    Ok(_ok) => (),
-                }
-
-                "".to_string()
-            }
-        }
-
-        // TODO构建
-    })
-    .is_err()
-    {
-        build_success = false;
-    }
-
-    // 计算时间
-    let elapsed = start.elapsed();
-
-    let hours: u64 = elapsed.as_secs() / 3600;
-    let minutes: u64 = (elapsed.as_secs() % 3600) / 60;
-    let secs: u64 = (elapsed.as_secs() % 3600) % 60;
-    let nanos: u32 = elapsed.subsec_nanos();
-
-    println!("use {}:{}:{} {:09}ns", hours, minutes, secs, nanos);
-
-    // 检查结果
-    if build_success {
-        printer::ok_line("- finished -");
-        process::exit(0);
-    } else {
-        printer::error_line("- failed -");
-        process::exit(1);
-    }
+    process::exit(0);
 }

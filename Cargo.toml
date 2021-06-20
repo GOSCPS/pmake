@@ -1,5 +1,5 @@
 [package]
-name = "remake"
+name = "pmake"
 version = "0.1.0"
 edition = "2018"
 authors = ["GOSCPS Team <goscps@foxmail.com>"]
@@ -10,6 +10,7 @@ readme = "README.md"
 repository = "https://github.com/GOSCPS/remake"
 
 [dependencies]
-ahash = "0.7"
-colored = "2.0.0"
+owo-colors = "2.0.0"
 lazy_static = "1.4.0"
+num_cpus = "1.13.0"
+num_enum = "0.5.1"
