@@ -192,7 +192,7 @@ let depends_count : u64 = 1;
 let depends : String[] = ["editor"];
 
 // 输入名为editor的文件
-let input_count : u64 = 0;
+let input_count : u64 = 1;
 let inputs : String[] = ["editor"];
 
 // 我们无法检查editor的安装路径
