@@ -61,14 +61,20 @@ target的布局如下:
 | inputs | 字符串的数组，数组长度取决于inputs count | 输入文件 |
 | output count | u64 | 输出文件的数量 |
 | outputs | 字符串的数组，数组长度取决于inputs count | 输出文件 |
-| command type | 操作类型 | 要执行的操作的类型 |
-| command | 取决于操作类型，见下文 | 执行操作的数据 |
+| command count | u64 | 决定有多少操作 |
+| commands | 操作的数组，数组长度取决于command count | 执行操作的数据 |
+
+操作(command)的定义:
+| 名称 | 长度 | 内容 |
+|:---:|:----:|:----:|
+| command type | u64 | 操作的类型 |
+| command | 不定长 | 操作的数据
 
 command type有以下取值:
 | 值  | 内容 |
 |:---:|:----:|
-| shell | shell操作 |
-| process | 进程操作 |
+| 0 | shell操作 |
+| 1 | 进程操作 |
 
 shell操作需要command的结构:
 | 名称 | 长度 | 内容 |
@@ -92,3 +98,122 @@ process操作需要的command结构:
 | start error | u8 | 如果设置为0，则无论是否成功启动进程都继续进行。如果设置为非0，则进程启动失败就引发错误。 |
 
 综上。
+ 
+# 一个例子
+这个例子的等价makefile
+```makefile
+editor: main.c text.c
+	gcc editor main.c text.c
+install:editor
+	mv editor /usr/local
+```
+
+首先，我们先构建PMake文件的头部:
+我们将在x64-linux下构建，所以头应该长这样:
+```rust
+// 伪代码
+// 格式:
+// let 变量名称 : 变量类型 = 值
+// 将以下变量按定义顺序以 大端序 写入文件即可
+
+// 我们的PMake版本号
+let standard : u64 = 1;
+
+// 我们的linux操作系统版本号
+let os_type : u64 = 1;
+
+// 我们的x86结构版本号
+let arch_type : u64 = 0;
+```
+之后，我们定义我们的target:
+```rust
+// 还是按定义的顺序以 大端序 写入文件即可
+// 在头之后写入
+
+// 定义editor这个target
+let name_length : u64 = "editor".length();
+let name : String = "editor";
+
+// 没有依赖，所以定义为0
+let depends_count : u64 = 0;
+
+// 定义输入文件
+// 有两个输入文件
+// PMake会检查这些文件以决定是否进行增量编译
+let input_count : u64 = 2;
+// !!注意!!
+// 写入字符串时要先写入字符串的长度(u64)
+// 本篇省略字符串的长度
+// 扩展可得
+// let input_1 : u64 = "main.c".length();
+// let input_1_str : String = "main.c";
+// 
+// let input_2 : u64 = "text.c".length();
+// let input_2_str : String = "text.c";
+let inputs : String[] = ["main.c","text.c"];
+
+// 输出文件
+// PMake会检查输出文件以决定是否进行增量编译
+// 如果输出文件不存在
+// 或
+// 输入文件晚于输出文件修改
+// 则进行增量编译
+// 否则什么也不干
+let output_count : u64 = 1;
+
+// !字符串长度
+let outputs : String[] = ["editor"];
+
+// 我们只需要执行一个操作
+let command_count : u64 = 1;
+
+// 定义所执行的操作
+// 我们执行shell操作
+let command_type : u64 = 0;
+
+// 写入执行的命令
+let shell_command_length : u64 = "gcc editor main.c text.c".length();
+let shell_command : String = "gcc editor main.c text.c";
+
+// 我们不忽略错误
+let error : u8 = 1;
+let shell_error : u8 =1;
+```
+下面是install的定义:
+```rust
+// 在editor之后写入
+
+// 定义install这个target
+let name_length : u64 = "install".length();
+let name : String = "install";
+
+// 依赖editor，1
+let depends_count : u64 = 1;
+let depends : String[] = ["editor"];
+
+// 输入名为editor的文件
+let input_count : u64 = 0;
+let inputs : String[] = ["editor"];
+
+// 我们无法检查editor的安装路径
+// 设置输出为0
+// PMake将会永远构建这个target
+// 即，忽略增量编译
+let output_count : u64 = 0;
+
+// 我们只需要执行一个操作
+let command_count : u64 = 1;
+
+// 定义所执行的操作
+// 我们执行shell操作
+let command_type : u64 = 0;
+
+// 写入执行的命令
+let shell_command : String = "mv editor /usr/local";
+
+// 我们不忽略错误
+let error : u8 = 1;
+let shell_error : u8 =1;
+```
+这个makefile并不能完美转换到PMake。如无法检查用户是否安装了editor。
+但是PMake作为后端，应该提前获知安装路径。所以此问题并不存在真实的场景当中。
