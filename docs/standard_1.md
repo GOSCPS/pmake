@@ -55,6 +55,8 @@ target的布局如下:
 | 名称 | 长度 | 内容 |
 |:---:|:----:|:----:|
 | name | 字符串 | 指定了当前target的名称 |
+| depends count | u64 | 当前target的依赖的名称的数量 |
+| depends | 字符串的数组，数组长度取决于depends count | 依赖 |
 | inputs count | u64 | 输入文件的数量 |
 | inputs | 字符串的数组，数组长度取决于inputs count | 输入文件 |
 | output count | u64 | 输出文件的数量 |
