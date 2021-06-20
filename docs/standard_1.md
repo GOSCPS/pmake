@@ -75,7 +75,7 @@ shell操作需要command的结构:
 | error | u8 | 如果设置为0，则忽略返回值。如果设置为非0，则在shell返回非0时引发错误。|
 | shell error | u8 | 如果设置为0，则无论是否成功启动shell都继续进行。如果设置为非0，则shell启动失败就引发错误。 |
 
-注:ignore error是判断shell返回值的设置。而ignore shell error是判断启动shell的设置。
+注:error是判断shell返回值的设置。而shell error是判断启动shell的设置。
 
 shell并不一定会启动成功。
 
@@ -84,7 +84,8 @@ process操作需要的command结构:
 | 名称 | 长度 | 内容 |
 |:---:|:----:|:----:|
 | process name | 字符串 | 要启动的程序名称 |
-| process args | 字符串的数组 | 要启动的进程的参数 |
+| process args count | u64 | 要启动的进程的参数的数量 |
+| process args | 字符串的数组，数组长度取决于process args count | 要启动的进程的参数 |
 | error | u8 | 如果设置为0，则忽略返回值。如果设置为非0，则在进程返回非0时引发错误。|
 | start error | u8 | 如果设置为0，则无论是否成功启动进程都继续进行。如果设置为非0，则进程启动失败就引发错误。 |
 
